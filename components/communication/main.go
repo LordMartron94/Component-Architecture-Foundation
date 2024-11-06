@@ -11,7 +11,6 @@ import (
 	"github.com/component-architecture-foundation/logging/common"
 	"github.com/component-architecture-foundation/logging/output"
 	"github.com/component-architecture-foundation/networking"
-	"github.com/component-architecture-foundation/networking/authentication"
 	"github.com/component-architecture-foundation/networking/coding"
 	"github.com/component-architecture-foundation/shared"
 )
@@ -41,10 +40,9 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	authenticator := &authentication.WhitelistAuthenticator{Logger: logger}
 	coder := coding.JsonMessageCoder{Logger: logger}
 
-	router := networking.NewRouter(logger, &wg, authenticator, coder)
+	router := networking.NewRouter(logger, &wg, coder)
 	router.Start()
 
 	wg.Wait()

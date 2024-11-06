@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/authentication"
 	"github.com/component-architecture-foundation/networking/coding"
 	"github.com/component-architecture-foundation/networking/component_registration"
+	"github.com/component-architecture-foundation/networking/handlers"
 	"github.com/component-architecture-foundation/networking/lifecycle_managing"
 	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/routing"
@@ -28,10 +28,28 @@ type Router struct {
 	messageHandlers    map[string]message_handling.MessageProcessorInterface
 }
 
-func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageAuthenticator authentication.AuthenticatorInterface, messageCoder coding.MessageCoderInterface) *Router {
+func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
 	msgChan := make(chan transport.Message)
+	shutdownChan := make(chan struct{})
 
-	listener := NewTCPHandler(logger, shared.ListeningAddress+":"+shared.ListeningPort, messageAuthenticator, msgChan, messageCoder)
+	server := transport.ComponentID{
+		Title:        shared.ServerName,
+		Version:      shared.ServerVersion,
+		Capabilities: nil,
+	}
+
+	peerHandler := handlers.PeerHandler{Logger: logger}
+	messageUtility := handlers.MessageUtility{Logger: logger, MessageCoder: messageCoder, Server: server}
+	communicationHandler := handlers.CommunicationHandler{
+		Logger:         logger,
+		PeerHandler:    &peerHandler,
+		MessageUtility: &messageUtility,
+		MessageCoder:   messageCoder,
+	}
+
+	connectionHandler := handlers.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
+
+	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
 
 	shutdownListeners := make([]lifecycle_managing.ShutdownInterface, 0)
 	shutdownListeners = append(shutdownListeners, listener)
@@ -53,6 +71,7 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageAuthentica
 		payloadToComponent: routing.PayloadToComponent{Logger: logger},
 		componentRegistrar: componentRegistrar,
 	}
+	router.messageHandlers = make(map[string]message_handling.MessageProcessorInterface)
 
 	router.RegisterMessageHandler("register", &message_handling.RegisterMessageHandler{
 		Logger:            logger,

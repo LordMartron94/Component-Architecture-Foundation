@@ -4,8 +4,9 @@ const MainComponentName = "Middleman Component"
 const NetworkingComponentName = "Networker"
 const RoutingComponentName = "Router"
 
-const ListeningAddress = "127.0.0.1"
+const ListeningHost = "127.0.0.1"
 const ListeningPort = "3333"
+const ListeningAddress = ListeningHost + ":" + ListeningPort
 const EndOfMessageToken = "<eom>"
 
 const ServerName = "Middleman"
