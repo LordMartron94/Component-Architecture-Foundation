@@ -9,114 +9,62 @@ const EndOfMessageToken = "<eom>"
 
 // ---- Default Server Messages ----
 
-// DefaultSuccessReponse The Default success response for the server.
+// DefaultSuccessResponsePayload The Default success response for the server.
 // Don't forget to set the target component and time sent.
-const DefaultSuccessReponse = `{
-		"requester": {
-			"title": "Middleman Component",
-			"version": "1.0.0",
-			"capabilities": []
-		},
-		"target": {
-			"title": "",
-			"version": "N/A",
-			"capabilities": []
-		},
-		"time_sent": "2024-11-06T12:58:30Z",
-		"payload": {
-			"action": "Response",
-			"args": [
-				{
-					"type": "string",
-					"value": "The server has received your request and will process it accordingly."
-				},
-				{
-					"type": "int",
-					"value": "1"
-				}
-			]
-		}
+const DefaultSuccessResponsePayload = `{
+		"action": "response",
+		"args": [
+			{
+				"type": "string",
+				"value": "The server has received your request and will process it accordingly."
+			},
+			{
+				"type": "int",
+				"value": "1"
+			}
+		]
 	}`
 
-const RegisterSuccessReponse = `{
-		"requester": {
-			"title": "Middleman Component",
-			"version": "1.0.0",
-			"capabilities": []
-		},
-		"target": {
-			"title": "",
-			"version": "N/A",
-			"capabilities": []
-		},
-		"time_sent": "2024-11-06T12:58:30Z",
-		"payload": {
-			"action": "Response",
-			"args": [
-				{
-					"type": "string",
-					"value": "The server has successfully registered you."
-				},
-				{
-					"type": "int",
-					"value": "0"
-				}
-			]
-		}
+const RegisterSuccessResponsePayload = `{
+		"action": "response",
+		"args": [
+			{
+				"type": "string",
+				"value": "The server has successfully registered you."
+			},
+			{
+				"type": "int",
+				"value": "0"
+			}
+		]
 	}`
 
-// InvalidRequestResponse The Default failure response for the server.
+// InvalidRequestResponsePayload The Default failure response for the server.
 // Don't forget to set the target component and time sent.
-const InvalidRequestResponse = `{
-		"requester": {
-			"title": "Middleman Component",
-			"version": "1.0.0",
-			"capabilities": []
-		},
-		"target": {
-			"title": "",
-			"version": "N/A",
-			"capabilities": []
-		},
-		"time_sent": "2024-11-06T12:58:30Z",
-		"payload": {
-			"action": "Error",
-			"args": [
-				{
-					"type": "string",
-					"value": "Invalid Request, please verify your format."
-				},
-				{
-					"type": "int",
-					"value": "355"
-				}
-			]
-		}
+const InvalidRequestResponsePayload = `{
+		"action": "error",
+		"args": [
+			{
+				"type": "string",
+				"value": "Invalid Request, please verify your format."
+			},
+			{
+				"type": "int",
+				"value": "355"
+			}
+		]
 	}`
 
-const NoMatchFoundResponse = `{
-		"requester": {
-			"title": "Middleman Component",
-			"version": "1.0.0",
-			"capabilities": []
-		},
-		"target": {
-			"title": "",
-			"version": "N/A",
-			"capabilities": []
-		},
-		"time_sent": "2024-11-06T12:58:30Z",
-		"payload": {
-			"action": "Error",
-			"args": [
-				{
-					"type": "string",
-					"value": "There was no match for the request action.\nPlease verify that your action argument types and numbers are correct."
-				},
-				{
-					"type": "int",
-					"value": "354"
-				}
-			]
-		}
+const NoMatchFoundResponsePayload = `{
+		"action": "error",
+		"args": [
+			{
+				"type": "string",
+				"value": "There was no match for the request action.\nPlease verify that your action argument types and numbers are correct."
+			},
+			{
+				"type": "int",
+				"value": "354"
+			}
+		]
 	}`

@@ -200,14 +200,14 @@ func (tcp *TCPHandler) listenForData(conn net.Conn, peer Peer, scanner *scanning
 				decodedMessage, err := tcp.decodeReadData(data)
 
 				if err != nil {
-					err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.InvalidRequestResponse))
+					err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.InvalidRequestResponsePayload))
 					if err != nil {
 						tcp.Logger.Error(fmt.Sprintf("Failed to send failure response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 						continue
 					}
 				}
 
-				err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.DefaultSuccessReponse))
+				err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.DefaultSuccessResponsePayload))
 				if err != nil {
 					tcp.Logger.Error(fmt.Sprintf("Failed to send success response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 					continue
@@ -296,15 +296,22 @@ func (tcp *TCPHandler) createMessage(payload transport.MessagePayload, target tr
 	return *message
 }
 
-func (tcp *TCPHandler) SendResponse(id transport.ComponentID, message []byte) error {
+func (tcp *TCPHandler) SendResponse(id transport.ComponentID, payload []byte) error {
 	associatedPeer, err := tcp.findPeerByComponentID(id)
 	if err != nil {
 		tcp.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
-	decodedMessage, err := tcp.decodeMessage(message, id)
-	return tcp.sendMessage(associatedPeer, decodedMessage)
+	createdPayload, err := transport.MessagePayloadFromBytes(payload)
+
+	if err != nil {
+		tcp.Logger.Error(fmt.Sprintf("Error creating message payload: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		return err
+	}
+
+	createdMessage := tcp.createMessage(createdPayload, id)
+	return tcp.sendMessage(associatedPeer, createdMessage)
 }
 
 func (tcp *TCPHandler) SendRequest(id transport.ComponentID, payload transport.MessagePayload) error {

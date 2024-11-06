@@ -110,7 +110,7 @@ func (r *Router) processMessage(message transport.Message) {
 		r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", message.Requester.Title, message.Requester.Version), false, shared.MainComponentName)
 		r.registerComponent(message)
 
-		err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessReponse))
+		err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessResponsePayload))
 		if err != nil {
 			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
 		}
@@ -121,7 +121,7 @@ func (r *Router) processMessage(message transport.Message) {
 
 	if err != nil {
 		r.Logger.Error(fmt.Sprintf("Failed to find target component for message: %s", err.Error()), false, shared.MainComponentName)
-		err := r.Listener.SendResponse(message.Requester, []byte(shared.NoMatchFoundResponse))
+		err := r.Listener.SendResponse(message.Requester, []byte(shared.NoMatchFoundResponsePayload))
 
 		if err != nil {
 			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
