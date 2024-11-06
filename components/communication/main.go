@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/component-architecture-foundation/logging/common"
 	"github.com/component-architecture-foundation/logging/output"
 	"github.com/component-architecture-foundation/networking"
+	"github.com/component-architecture-foundation/networking/coding"
 	"github.com/component-architecture-foundation/shared"
 )
 
@@ -34,12 +36,14 @@ func getLogger() logging.HoornLogger {
 
 func main() {
 	logger := getLogger()
-	logger.Info("Starting communication layer...", false, shared.MainComponentName)
+	logger.Info(fmt.Sprintf("Starting server '%s@%s'...", shared.ServerName, shared.ServerVersion), false, shared.MainComponentName)
 
 	var wg sync.WaitGroup
 
-	router := networking.NewRouter(logger, &wg)
-	router.StartListening()
+	coder := coding.JsonMessageCoder{Logger: logger}
+
+	router := networking.NewRouter(logger, &wg, coder)
+	router.Start()
 
 	wg.Wait()
 }
