@@ -4,10 +4,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/logging/common"
 	"github.com/component-architecture-foundation/logging/output"
+	"github.com/component-architecture-foundation/networking"
 	"github.com/component-architecture-foundation/shared"
 )
 
@@ -33,4 +35,11 @@ func getLogger() logging.HoornLogger {
 func main() {
 	logger := getLogger()
 	logger.Info("Starting communication layer...", false, shared.MainComponentName)
+
+	var wg sync.WaitGroup
+
+	router := networking.NewRouter(logger, &wg)
+	router.StartListening()
+
+	wg.Wait()
 }

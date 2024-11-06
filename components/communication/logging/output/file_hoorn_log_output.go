@@ -71,7 +71,7 @@ func (fhl *FileHoornLogOutput) getSubDirectories() ([]os.DirEntry, error) {
 	return os.ReadDir(fhl.logDirectory)
 }
 
-// handleLogFiles will handle each log file
+// handleLogFile will handle each log file
 func handleLogFile(dirPath, file string, maxLogsToKeep int) error {
 	extension := filepath.Ext(file)
 	name := strings.TrimSuffix(file, extension)
