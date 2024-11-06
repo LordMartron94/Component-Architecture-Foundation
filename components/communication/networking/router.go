@@ -11,6 +11,7 @@ import (
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/authentication"
 	"github.com/component-architecture-foundation/networking/coding"
+	"github.com/component-architecture-foundation/networking/routing"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
@@ -21,6 +22,7 @@ type Router struct {
 	Listener             NetworkHandlerInterface
 	registeredComponents []transport.ComponentID
 	WaitGroup            *sync.WaitGroup
+	payloadToComponent   routing.PayloadToComponent
 }
 
 func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup) *Router {
@@ -29,10 +31,11 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup) *Router {
 	listener := NewTCPHandler(logger, "127.0.0.1:"+shared.ListeningPort, &authentication.WhitelistAuthenticator{Logger: logger}, msgChan, coding.JsonMessageCoder{Logger: logger})
 
 	return &Router{
-		Logger:         logger,
-		Listener:       listener,
-		MessageChannel: msgChan,
-		WaitGroup:      wg,
+		Logger:             logger,
+		Listener:           listener,
+		MessageChannel:     msgChan,
+		WaitGroup:          wg,
+		payloadToComponent: routing.PayloadToComponent{Logger: logger},
 	}
 }
 
@@ -55,8 +58,8 @@ func (r *Router) registerComponent(message transport.Message) {
 	r.registeredComponents = append(r.registeredComponents, message.Requester)
 }
 
-func (r *Router) getTargetComponentForMessage(message transport.Message) {
-
+func (r *Router) getTargetComponentForMessage(message transport.Message) (transport.ComponentID, error) {
+	return r.payloadToComponent.SearchForComponent(message.Payload, r.registeredComponents)
 }
 
 func (r *Router) StartListening() {
@@ -97,15 +100,40 @@ func (r *Router) handleMessages() {
 			r.Logger.Debug(fmt.Sprintf("Gotten message from '%s@%s' with payload '%s'", msg.Requester.Title, msg.Requester.Version, msg.Payload), false, shared.MainComponentName)
 			r.processMessage(msg)
 		default:
-			time.Sleep(time.Millisecond * 10) // Or other small duration
+			time.Sleep(time.Millisecond * 10)
 		}
 	}
 }
 
 func (r *Router) processMessage(message transport.Message) {
-	// TODO: Implement message processing logic here
 	if message.Payload.Action == "register" {
 		r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", message.Requester.Title, message.Requester.Version), false, shared.MainComponentName)
 		r.registerComponent(message)
+
+		err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessReponse))
+		if err != nil {
+			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
+		}
+		return
+	}
+
+	targetComponent, err := r.getTargetComponentForMessage(message)
+
+	if err != nil {
+		r.Logger.Error(fmt.Sprintf("Failed to find target component for message: %s", err.Error()), false, shared.MainComponentName)
+		err := r.Listener.SendResponse(message.Requester, []byte(shared.NoMatchFoundResponse))
+
+		if err != nil {
+			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
+		}
+
+		return
+	}
+
+	err = r.Listener.SendRequest(targetComponent, message.Payload)
+
+	if err != nil {
+		r.Logger.Error(fmt.Sprintf("Failed to send request to '%s@%s': %s", targetComponent.Title, targetComponent.Version, err.Error()), false, shared.MainComponentName)
+		return
 	}
 }

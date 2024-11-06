@@ -25,6 +25,7 @@ type TCPHandler struct {
 
 	activeConnections []Peer
 	shutdownChan      chan struct{}
+	server            transport.ComponentID
 }
 
 func NewTCPHandler(logger logging.HoornLogger, address string, authenticator authentication.AuthenticatorInterface, messageChannel chan transport.Message, coder coding.MessageCoderInterface) *TCPHandler {
@@ -36,6 +37,11 @@ func NewTCPHandler(logger logging.HoornLogger, address string, authenticator aut
 		MessageCoder:      coder,
 		activeConnections: make([]Peer, 0),
 		shutdownChan:      make(chan struct{}),
+		server: transport.ComponentID{
+			Title:        "Middleman",
+			Version:      "1.0.0",
+			Capabilities: make([]transport.Capability, 0),
+		},
 	}
 }
 
@@ -194,7 +200,7 @@ func (tcp *TCPHandler) listenForData(conn net.Conn, peer Peer, scanner *scanning
 				decodedMessage, err := tcp.decodeReadData(data)
 
 				if err != nil {
-					err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.DefaultFailureResponse))
+					err = tcp.sendResponse(decodedMessage.Target, peer, []byte(shared.InvalidRequestResponse))
 					if err != nil {
 						tcp.Logger.Error(fmt.Sprintf("Failed to send failure response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 						continue
@@ -235,7 +241,7 @@ func (tcp *TCPHandler) sendResponse(component transport.ComponentID, peer Peer, 
 	codedResponse.Target = component
 	codedResponse.TimeSent = time.Now()
 
-	err = tcp.SendMessage(peer, codedResponse)
+	err = tcp.sendMessage(peer, codedResponse)
 
 	if err != nil {
 		tcp.Logger.Error(fmt.Sprintf("Failed to send response: '%s'", err.Error()), false, shared.NetworkingComponentName)
@@ -254,7 +260,7 @@ func (tcp *TCPHandler) removePeer(addr net.Addr) {
 	}
 }
 
-func (tcp *TCPHandler) SendMessage(target Peer, message transport.Message) error {
+func (tcp *TCPHandler) sendMessage(target Peer, message transport.Message) error {
 	encodedMessage, err := tcp.MessageCoder.Encode(message)
 
 	if err != nil {
@@ -273,30 +279,43 @@ func (tcp *TCPHandler) SendMessage(target Peer, message transport.Message) error
 	return nil
 }
 
-func (tcp *TCPHandler) SendRequest(id transport.ComponentID, message transport.Message) error {
+func (tcp *TCPHandler) decodeMessage(message []byte, target transport.ComponentID) (transport.Message, error) {
+	decodedMessage, err := tcp.MessageCoder.Decode(message)
+	if err != nil {
+		return transport.Message{}, err
+	}
+
+	decodedMessage.TimeSent = time.Now()
+	decodedMessage.Target = target
+
+	return decodedMessage, nil
+}
+
+func (tcp *TCPHandler) createMessage(payload transport.MessagePayload, target transport.ComponentID) transport.Message {
+	message := transport.NewMessage(tcp.server, target, payload)
+	return *message
+}
+
+func (tcp *TCPHandler) SendResponse(id transport.ComponentID, message []byte) error {
 	associatedPeer, err := tcp.findPeerByComponentID(id)
 	if err != nil {
 		tcp.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
-	encodedMessage, err := tcp.MessageCoder.Encode(message)
+	decodedMessage, err := tcp.decodeMessage(message, id)
+	return tcp.sendMessage(associatedPeer, decodedMessage)
+}
 
+func (tcp *TCPHandler) SendRequest(id transport.ComponentID, payload transport.MessagePayload) error {
+	associatedPeer, err := tcp.findPeerByComponentID(id)
 	if err != nil {
-		tcp.Logger.Error(fmt.Sprintf("Error encoding message: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		tcp.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
-	encodedMessage = append(encodedMessage, []byte(shared.EndOfMessageToken)...)
-
-	conn := associatedPeer.Connection
-	_, err = conn.Write(encodedMessage)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	createdMessage := tcp.createMessage(payload, id)
+	return tcp.sendMessage(associatedPeer, createdMessage)
 }
 
 func (tcp *TCPHandler) findPeerByComponentID(id transport.ComponentID) (Peer, error) {
