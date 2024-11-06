@@ -146,24 +146,10 @@ func (tcp *TCPHandler) listenForData(conn net.Conn, peer Peer, scanner *scanning
 			}
 			return
 		default:
-			// Set a read deadline to prevent indefinite blocking
-			//err := conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-			//if err != nil {
-			//	tcp.Logger.Error(fmt.Sprintf("Error setting read deadline: %s", err), false, shared.NetworkingComponentName)
-			//	return
-			//}
-
 			for {
 				scanned, err := scanner.Scan()
 
 				if err != nil {
-					//if os.IsTimeout(err) {
-					//	tcp.Logger.Debug(fmt.Sprintf("Read deadline exceeded for peer: '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
-					//	conn.Close()
-					//	tcp.removePeer(peer.Address)
-					//	return
-					//}
-
 					if err == io.EOF {
 						tcp.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
 						tcp.removePeer(peer.Address)
@@ -193,9 +179,6 @@ func (tcp *TCPHandler) listenForData(conn net.Conn, peer Peer, scanner *scanning
 					tcp.Logger.Error(fmt.Sprintf("Failed to read data: '%s'", err.Error()), false, shared.NetworkingComponentName)
 					continue
 				}
-
-				//Reset the deadline if a successful read occurs
-				//conn.SetReadDeadline(time.Time{})
 
 				decodedMessage, err := tcp.decodeReadData(data)
 
@@ -255,7 +238,7 @@ func (tcp *TCPHandler) removePeer(addr net.Addr) {
 	for i, p := range tcp.activeConnections {
 		if p.Address.String() == addr.String() {
 			tcp.activeConnections = append(tcp.activeConnections[:i], tcp.activeConnections[i+1:]...)
-			break //Peer removed, exit the loop
+			break
 		}
 	}
 }
