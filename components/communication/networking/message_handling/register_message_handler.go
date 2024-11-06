@@ -14,8 +14,10 @@ type RegisterMessageHandler struct {
 	RegisterComponent func(message transport.Message)
 }
 
-func (r RegisterMessageHandler) ProcessMessage(message transport.Message) error {
+func (r *RegisterMessageHandler) ProcessMessage(message transport.Message) error {
 	r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", message.Requester.Title, message.Requester.Version), false, shared.MainComponentName)
+	capabilities := r.convertCapabilitiesToString(message.Requester.Capabilities)
+	r.Logger.Debug(fmt.Sprintf("Capabilities: %s", capabilities), false, shared.MainComponentName)
 	r.RegisterComponent(message)
 
 	err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessResponsePayload))
@@ -25,4 +27,15 @@ func (r RegisterMessageHandler) ProcessMessage(message transport.Message) error 
 	}
 
 	return nil
+}
+
+func (r *RegisterMessageHandler) convertCapabilitiesToString(capabilities []transport.Capability) string {
+	var finalString = ""
+
+	for i, capability := range capabilities {
+		capabilityString := fmt.Sprintf("Capability [%d] - [Name: %s, numArgs: %d]", i, capability.Name, capability.Signature.NumOfArgs)
+		finalString += capabilityString + " | "
+	}
+
+	return finalString
 }
