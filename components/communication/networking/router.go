@@ -2,68 +2,82 @@ package networking
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/authentication"
 	"github.com/component-architecture-foundation/networking/coding"
+	"github.com/component-architecture-foundation/networking/component_registration"
+	"github.com/component-architecture-foundation/networking/lifecycle_managing"
+	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/routing"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
 
 type Router struct {
-	Logger               logging.HoornLogger
-	MessageChannel       chan transport.Message
-	Listener             NetworkHandlerInterface
-	registeredComponents []transport.ComponentID
-	WaitGroup            *sync.WaitGroup
-	payloadToComponent   routing.PayloadToComponent
+	Logger         logging.HoornLogger
+	MessageChannel chan transport.Message
+	Listener       NetworkHandlerInterface
+
+	waitGroup          *sync.WaitGroup
+	lifecycleManager   lifecycle_managing.LifeCycleManager
+	componentRegistrar component_registration.ComponentRegistrar
+	payloadToComponent routing.PayloadToComponent
+	messageHandlers    map[string]message_handling.MessageProcessorInterface
 }
 
-func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup) *Router {
+func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageAuthenticator authentication.AuthenticatorInterface, messageCoder coding.MessageCoderInterface) *Router {
 	msgChan := make(chan transport.Message)
 
-	listener := NewTCPHandler(logger, "127.0.0.1:"+shared.ListeningPort, &authentication.WhitelistAuthenticator{Logger: logger}, msgChan, coding.JsonMessageCoder{Logger: logger})
+	listener := NewTCPHandler(logger, shared.ListeningAddress+":"+shared.ListeningPort, messageAuthenticator, msgChan, messageCoder)
 
-	return &Router{
+	shutdownListeners := make([]lifecycle_managing.ShutdownInterface, 0)
+	shutdownListeners = append(shutdownListeners, listener)
+
+	lifecycleManager := lifecycle_managing.LifeCycleManager{
+		Logger:            logger,
+		ShutdownListeners: shutdownListeners,
+		WaitGroup:         wg,
+	}
+
+	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger}
+
+	router := &Router{
 		Logger:             logger,
 		Listener:           listener,
 		MessageChannel:     msgChan,
-		WaitGroup:          wg,
+		waitGroup:          wg,
+		lifecycleManager:   lifecycleManager,
 		payloadToComponent: routing.PayloadToComponent{Logger: logger},
+		componentRegistrar: componentRegistrar,
 	}
+
+	router.RegisterMessageHandler("register", &message_handling.RegisterMessageHandler{
+		Logger:            logger,
+		Listener:          listener,
+		RegisterComponent: componentRegistrar.RegisterComponent,
+	})
+	router.RegisterMessageHandler("__default__", &message_handling.DefaultMessageHandler{
+		Logger:                       logger,
+		Listener:                     listener,
+		GetTargetComponentForMessage: router.getTargetComponentForMessage,
+	})
+
+	return router
 }
 
-func containsComponentID(s []transport.ComponentID, e transport.ComponentID) bool {
-	for _, a := range s {
-		if a.Equal(e) {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *Router) registerComponent(message transport.Message) {
-	// Checks if the component is already registered, and if so, returns.
-	if containsComponentID(r.registeredComponents, message.Requester) {
-		r.Logger.Info(fmt.Sprintf("Component %s is already registered.", message.Requester.Title), false, shared.MainComponentName)
-		return
-	}
-
-	r.registeredComponents = append(r.registeredComponents, message.Requester)
+func (r *Router) RegisterMessageHandler(action string, handler message_handling.MessageProcessorInterface) {
+	r.messageHandlers[action] = handler
 }
 
 func (r *Router) getTargetComponentForMessage(message transport.Message) (transport.ComponentID, error) {
-	return r.payloadToComponent.SearchForComponent(message.Payload, r.registeredComponents)
+	return r.payloadToComponent.SearchForComponent(message.Payload, r.componentRegistrar.GetRegisteredComponents())
 }
 
-func (r *Router) StartListening() {
-	r.WaitGroup.Add(1)
+func (r *Router) Start() {
+	r.waitGroup.Add(1)
 	go func() {
 		err := r.Listener.StartListenLoop()
 		if err != nil {
@@ -72,25 +86,8 @@ func (r *Router) StartListening() {
 		}
 	}()
 
-	go r.listenForTermination()
+	go r.lifecycleManager.ListenForTermination()
 	go r.handleMessages()
-}
-
-func (r *Router) listenForTermination() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGKILL, syscall.SIGQUIT)
-	<-sigs
-	r.Logger.Info("Received termination signal, shutting down server gracefully...", false, shared.MainComponentName)
-	r.shutdownServer()
-}
-
-func (r *Router) shutdownServer() {
-	err := r.Listener.Shutdown()
-	if err != nil {
-		r.Logger.Error(fmt.Sprintf("Something went wrong while shutting down the network Listener: '%s'", err.Error()), false, shared.MainComponentName)
-	}
-
-	r.WaitGroup.Done()
 }
 
 func (r *Router) handleMessages() {
@@ -106,34 +103,21 @@ func (r *Router) handleMessages() {
 }
 
 func (r *Router) processMessage(message transport.Message) {
-	if message.Payload.Action == "register" {
-		r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", message.Requester.Title, message.Requester.Version), false, shared.MainComponentName)
-		r.registerComponent(message)
-
-		err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessResponsePayload))
-		if err != nil {
-			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
+	for action, processor := range r.messageHandlers {
+		if action == message.Payload.Action {
+			err := processor.ProcessMessage(message)
+			if err != nil {
+				r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, message.Requester.Title, err.Error()), false, shared.MainComponentName)
+				return
+			}
+			return
 		}
-		return
 	}
 
-	targetComponent, err := r.getTargetComponentForMessage(message)
-
+	r.Logger.Debug(fmt.Sprintf("Received message '%s' with normal action. Resorting to default processor", message.Requester.Title), false, shared.MainComponentName)
+	defaultProcessor := r.messageHandlers["__default__"]
+	err := defaultProcessor.ProcessMessage(message)
 	if err != nil {
-		r.Logger.Error(fmt.Sprintf("Failed to find target component for message: %s", err.Error()), false, shared.MainComponentName)
-		err := r.Listener.SendResponse(message.Requester, []byte(shared.NoMatchFoundResponsePayload))
-
-		if err != nil {
-			r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
-		}
-
-		return
-	}
-
-	err = r.Listener.SendRequest(targetComponent, message.Payload)
-
-	if err != nil {
-		r.Logger.Error(fmt.Sprintf("Failed to send request to '%s@%s': %s", targetComponent.Title, targetComponent.Version, err.Error()), false, shared.MainComponentName)
-		return
+		r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, message.Requester.Title, err.Error()), false, shared.MainComponentName)
 	}
 }
