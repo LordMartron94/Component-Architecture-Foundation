@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"github.com/component-architecture-foundation/logging"
+	"github.com/component-architecture-foundation/networking/connectivity"
+	"github.com/component-architecture-foundation/networking/connectivity/communication"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
@@ -9,13 +11,13 @@ import (
 type TCPHandler struct {
 	Logger               logging.HoornLogger
 	MessageChannel       chan transport.Message
-	ConnectionHandler    ConnectionHandlerInterface
-	CommunicationHandler CommunicationHandlerInterface
+	ConnectionHandler    connectivity.ConnectionHandlerInterface
+	CommunicationHandler communication.CommunicationHandlerInterface
 
 	shutdownChan chan struct{}
 }
 
-func NewTCPHandler(logger logging.HoornLogger, messageChannel chan transport.Message, handlerInterface ConnectionHandlerInterface, communicationHandlerInterface CommunicationHandlerInterface, shutdownChan chan struct{}) *TCPHandler {
+func NewTCPHandler(logger logging.HoornLogger, messageChannel chan transport.Message, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}) *TCPHandler {
 	return &TCPHandler{
 		Logger:               logger,
 		MessageChannel:       messageChannel,

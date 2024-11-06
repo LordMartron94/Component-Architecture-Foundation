@@ -1,4 +1,4 @@
-package handlers
+package connectivity
 
 import (
 	"errors"
@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/component-architecture-foundation/logging"
+	"github.com/component-architecture-foundation/networking/connectivity/peer"
+	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/scanning"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
@@ -15,15 +17,15 @@ import (
 
 type DataListener struct {
 	Logger         logging.HoornLogger
-	PeerHandler    PeerHandlerInterface
-	MessageUtility MessageUtilityInterface
+	PeerHandler    peer.PeerHandlerInterface
+	MessageUtility message_handling.MessageUtilityInterface
 	MessageChannel chan transport.Message
 
 	sendResponse func(component transport.ComponentID, payload []byte) error
 	shutdownChan chan struct{}
 }
 
-func (d *DataListener) ListenForData(conn net.Conn, peer Peer, scanner *scanning.Scanner) {
+func (d *DataListener) ListenForData(conn net.Conn, peer peer.Peer, scanner *scanning.Scanner) {
 	for {
 		select {
 		case <-d.shutdownChan:

@@ -1,18 +1,20 @@
-package handlers
+package communication
 
 import (
 	"fmt"
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/coding"
+	"github.com/component-architecture-foundation/networking/connectivity/peer"
+	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
 
 type CommunicationHandler struct {
 	Logger         logging.HoornLogger
-	PeerHandler    PeerHandlerInterface
-	MessageUtility MessageUtilityInterface
+	PeerHandler    peer.PeerHandlerInterface
+	MessageUtility message_handling.MessageUtilityInterface
 	MessageCoder   coding.MessageCoderInterface
 }
 
@@ -45,7 +47,7 @@ func (c *CommunicationHandler) SendRequest(id transport.ComponentID, payload tra
 	return c.sendMessage(associatedPeer, createdMessage)
 }
 
-func (c *CommunicationHandler) sendMessage(target Peer, message transport.Message) error {
+func (c *CommunicationHandler) sendMessage(target peer.Peer, message transport.Message) error {
 	encodedMessage, err := c.MessageCoder.Encode(message)
 
 	if err != nil {

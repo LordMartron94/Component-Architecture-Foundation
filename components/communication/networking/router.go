@@ -8,6 +8,9 @@ import (
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/coding"
 	"github.com/component-architecture-foundation/networking/component_registration"
+	"github.com/component-architecture-foundation/networking/connectivity"
+	"github.com/component-architecture-foundation/networking/connectivity/communication"
+	"github.com/component-architecture-foundation/networking/connectivity/peer"
 	"github.com/component-architecture-foundation/networking/handlers"
 	"github.com/component-architecture-foundation/networking/lifecycle_managing"
 	"github.com/component-architecture-foundation/networking/message_handling"
@@ -38,16 +41,16 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder codi
 		Capabilities: nil,
 	}
 
-	peerHandler := handlers.PeerHandler{Logger: logger}
-	messageUtility := handlers.MessageUtility{Logger: logger, MessageCoder: messageCoder, Server: server}
-	communicationHandler := handlers.CommunicationHandler{
+	peerHandler := peer.PeerHandler{Logger: logger}
+	messageUtility := message_handling.MessageUtility{Logger: logger, MessageCoder: messageCoder, Server: server}
+	communicationHandler := communication.CommunicationHandler{
 		Logger:         logger,
 		PeerHandler:    &peerHandler,
 		MessageUtility: &messageUtility,
 		MessageCoder:   messageCoder,
 	}
 
-	connectionHandler := handlers.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
+	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
 
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
 

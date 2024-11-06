@@ -1,4 +1,4 @@
-package handlers
+package communication
 
 import "github.com/component-architecture-foundation/networking/transport"
 

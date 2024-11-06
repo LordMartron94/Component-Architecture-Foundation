@@ -1,4 +1,4 @@
-package handlers
+package connectivity
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/coding"
+	"github.com/component-architecture-foundation/networking/connectivity/communication"
+	"github.com/component-architecture-foundation/networking/connectivity/peer"
+	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/scanning"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
@@ -16,16 +19,16 @@ type DefaultConnectionHandler struct {
 	ListenAddress string
 
 	MessageCoder         coding.MessageCoderInterface
-	PeerHandler          PeerHandlerInterface
-	MessageUtility       MessageUtilityInterface
-	CommunicationHandler CommunicationHandlerInterface
+	PeerHandler          peer.PeerHandlerInterface
+	MessageUtility       message_handling.MessageUtilityInterface
+	CommunicationHandler communication.CommunicationHandlerInterface
 	DataListener         DataListener
 
 	MessageChannel chan transport.Message
 	shutdownChan   chan struct{}
 }
 
-func NewDefaultConnectionHandler(logger logging.HoornLogger, listenAddress string, messageCoder coding.MessageCoderInterface, peerHandler PeerHandlerInterface, messageUtility MessageUtilityInterface, communicationHandler CommunicationHandlerInterface, messageChannel chan transport.Message, shutdownChan chan struct{}) *DefaultConnectionHandler {
+func NewDefaultConnectionHandler(logger logging.HoornLogger, listenAddress string, messageCoder coding.MessageCoderInterface, peerHandler peer.PeerHandlerInterface, messageUtility message_handling.MessageUtilityInterface, communicationHandler communication.CommunicationHandlerInterface, messageChannel chan transport.Message, shutdownChan chan struct{}) *DefaultConnectionHandler {
 	handler := &DefaultConnectionHandler{
 		Logger:        logger,
 		ListenAddress: listenAddress,
