@@ -8,6 +8,9 @@ const ListeningAddress = "127.0.0.1"
 const ListeningPort = "3333"
 const EndOfMessageToken = "<eom>"
 
+const ServerName = "Middleman"
+const ServerVersion = "1.0.0"
+
 // ---- Default Server Messages ----
 
 // DefaultSuccessResponsePayload The Default success response for the server.

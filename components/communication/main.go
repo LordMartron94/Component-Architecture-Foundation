@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -36,7 +37,7 @@ func getLogger() logging.HoornLogger {
 
 func main() {
 	logger := getLogger()
-	logger.Info("Starting communication layer...", false, shared.MainComponentName)
+	logger.Info(fmt.Sprintf("Starting server '%s@%s'...", shared.ServerName, shared.ServerVersion), false, shared.MainComponentName)
 
 	var wg sync.WaitGroup
 

@@ -38,8 +38,8 @@ func NewTCPHandler(logger logging.HoornLogger, address string, authenticator aut
 		activeConnections: make([]Peer, 0),
 		shutdownChan:      make(chan struct{}),
 		server: transport.ComponentID{
-			Title:        "Middleman",
-			Version:      "1.0.0",
+			Title:        shared.ServerName,
+			Version:      shared.ServerVersion,
 			Capabilities: make([]transport.Capability, 0),
 		},
 	}

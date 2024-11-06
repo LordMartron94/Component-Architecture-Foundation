@@ -27,6 +27,7 @@ func (l *LifeCycleManager) ListenForTermination() {
 	<-sigs
 	l.Logger.Info("Received termination signal, shutting down server gracefully...", false, shared.MainComponentName)
 	l.shutdownServer()
+	l.Logger.Info("Server shutdown complete.", false, shared.MainComponentName)
 }
 
 func (l *LifeCycleManager) shutdownServer() {
