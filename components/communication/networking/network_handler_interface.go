@@ -5,6 +5,6 @@ import "github.com/component-architecture-foundation/networking/transport"
 type NetworkHandlerInterface interface {
 	Shutdown() error
 	StartListenLoop() error
-	SendMessage(Peer, transport.Message) error
-	SendRequest(transport.ComponentID, transport.Message) error
+	SendResponse(id transport.ComponentID, message []byte) error
+	SendRequest(id transport.ComponentID, payload transport.MessagePayload) error
 }
