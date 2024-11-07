@@ -12,8 +12,6 @@ const EndOfMessageToken = "<eom>"
 const ServerName = "Middleman"
 const ServerVersion = "1.0.0"
 
-const RootLogDir = "\\Component Architecture Foundation\\logs"
-
 // ---- Default Server Messages ----
 const ShutdownRequestPayload = `{
 		"action": "shutdown",

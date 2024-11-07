@@ -7,3 +7,6 @@
 
 # Draw.io
 *.bkp
+
+# Build
+/build

@@ -15,19 +15,19 @@ import (
 	"github.com/component-architecture-foundation/shared"
 )
 
-func getLogDir() string {
+func getLogDir(applicationName string) string {
 	var userConfigDir, err = os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("Failed to get user config directory: %v", err)
 	}
 
 	var dir = filepath.Join(userConfigDir, "AppData", "Local")
-	var logDir = dir + shared.RootLogDir
+	var logDir = dir + "\\" + applicationName + "\\logs"
 	return logDir
 }
 
-func getLogger() logging.HoornLogger {
-	logDir := getLogDir() + "\\Communication_Layer\\"
+func getLogger(applicationName string) logging.HoornLogger {
+	logDir := getLogDir(applicationName) + "\\Communication_Layer\\"
 
 	return logging.NewHoornLogger(
 		common.DEBUG,
@@ -40,7 +40,16 @@ func getLogger() logging.HoornLogger {
 }
 
 func main() {
-	logger := getLogger()
+	applicationArgs := os.Args
+
+	if len(applicationArgs) < 2 {
+		log.Fatalf("Usage: %s <application_name>", os.Args[0])
+		return
+	}
+
+	applicationName := applicationArgs[1]
+
+	logger := getLogger(applicationName)
 	logger.Info(fmt.Sprintf("Starting server '%s@%s'...", shared.ServerName, shared.ServerVersion), false, shared.MainComponentName)
 
 	var wg sync.WaitGroup
