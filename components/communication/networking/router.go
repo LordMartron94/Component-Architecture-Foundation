@@ -124,6 +124,7 @@ func (r *Router) Start() {
 
 	go r.lifecycleManager.ListenForTermination()
 	go r.handleMessages()
+	go r.info()
 }
 
 func (r *Router) handleMessages() {
@@ -155,5 +156,12 @@ func (r *Router) processMessage(message transport.Message) {
 	err := defaultProcessor.ProcessMessage(message)
 	if err != nil {
 		r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, message.Requester.Title, err.Error()), false, shared.MainComponentName)
+	}
+}
+
+func (r *Router) info() {
+	for {
+		r.Logger.Info(fmt.Sprintf("Router is running. Components registered: %d", len(r.componentRegistrar.GetRegisteredComponents())), false, shared.InfoComponentName)
+		time.Sleep(time.Second * 10)
 	}
 }

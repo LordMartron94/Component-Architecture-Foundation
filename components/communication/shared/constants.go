@@ -3,6 +3,7 @@ package shared
 const MainComponentName = "Middleman"
 const NetworkingComponentName = "Middleman.Networker"
 const RoutingComponentName = "Middleman.Router"
+const InfoComponentName = "Middleman.Info"
 
 const ListeningHost = "127.0.0.1"
 const ListeningPort = "3333"
