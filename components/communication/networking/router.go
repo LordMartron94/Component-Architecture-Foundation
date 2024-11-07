@@ -24,15 +24,14 @@ type Router struct {
 	MessageChannel chan transport.Message
 	Listener       NetworkHandlerInterface
 
-	waitGroup           *sync.WaitGroup
-	lifecycleManager    *lifecycle_managing.LifeCycleManager
-	componentRegistrar  *component_registration.ComponentRegistrar
-	payloadToComponent  *routing.PayloadToComponent
-	messageHandlers     map[string]message_handling.MessageProcessorInterface
-	setupLoggingPayload []byte
+	waitGroup          *sync.WaitGroup
+	lifecycleManager   *lifecycle_managing.LifeCycleManager
+	componentRegistrar *component_registration.ComponentRegistrar
+	payloadToComponent *routing.PayloadToComponent
+	messageHandlers    map[string]message_handling.MessageProcessorInterface
 }
 
-func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface, setupLoggingPayload []byte) *Router {
+func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
 	msgChan := make(chan transport.Message)
 	shutdownChan := make(chan struct{})
 
@@ -55,9 +54,8 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
 
 	specialActionPerformer := component_registration.SpecialActionPerformer{
-		Logger:              logger,
-		RequesterInterface:  listener,
-		SetupLoggingPayload: setupLoggingPayload,
+		Logger:             logger,
+		RequesterInterface: listener,
 	}
 	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger, SpecialActionPerformer: &specialActionPerformer}
 
@@ -78,14 +76,13 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	}
 
 	router := &Router{
-		Logger:              logger,
-		Listener:            listener,
-		MessageChannel:      msgChan,
-		waitGroup:           wg,
-		lifecycleManager:    &lifecycleManager,
-		payloadToComponent:  &routing.PayloadToComponent{Logger: logger},
-		componentRegistrar:  &componentRegistrar,
-		setupLoggingPayload: setupLoggingPayload,
+		Logger:             logger,
+		Listener:           listener,
+		MessageChannel:     msgChan,
+		waitGroup:          wg,
+		lifecycleManager:   &lifecycleManager,
+		payloadToComponent: &routing.PayloadToComponent{Logger: logger},
+		componentRegistrar: &componentRegistrar,
 	}
 	router.messageHandlers = make(map[string]message_handling.MessageProcessorInterface)
 

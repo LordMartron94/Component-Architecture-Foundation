@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/component-architecture-foundation/logging"
@@ -48,25 +47,7 @@ func main() {
 
 	coder := coding.JsonMessageCoder{Logger: &logger}
 
-	setupLoggingPayload := fmt.Sprintf(`{
-		"action": "setup_logging",
-		"args": [
-			{
-				"type": "string",
-				"value": "%s"
-			},
-			{
-				"type": "int",
-				"value": "%d"
-			},
-            {
-                "type": "string",
-                "value": "%s"
-            }
-		]
-	}`, strings.ReplaceAll(getLogDir()+"\\Components\\", `\`, `\\`), 5, "debug")
-
-	router := networking.NewRouter(&logger, &wg, coder, []byte(setupLoggingPayload))
+	router := networking.NewRouter(&logger, &wg, coder)
 	router.Start()
 
 	wg.Wait()
