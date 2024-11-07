@@ -8,9 +8,14 @@ import (
 	"github.com/component-architecture-foundation/shared"
 )
 
+type SpecialActionPerformerInterface interface {
+	PerformAnySpecialActions(component transport.ComponentID)
+}
+
 type ComponentRegistrar struct {
-	Logger               logging.HoornLogger
-	registeredComponents []transport.ComponentID
+	Logger                 *logging.HoornLogger
+	registeredComponents   []transport.ComponentID
+	SpecialActionPerformer SpecialActionPerformerInterface
 }
 
 func (c *ComponentRegistrar) RegisterComponent(message transport.Message) {
@@ -19,6 +24,7 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) {
 		return
 	}
 
+	c.SpecialActionPerformer.PerformAnySpecialActions(message.Requester)
 	c.registeredComponents = append(c.registeredComponents, message.Requester)
 }
 

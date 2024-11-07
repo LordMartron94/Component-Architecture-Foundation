@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/component-architecture-foundation/logging"
@@ -15,14 +16,19 @@ import (
 	"github.com/component-architecture-foundation/shared"
 )
 
-func getLogger() logging.HoornLogger {
+func getLogDir() string {
 	var userConfigDir, err = os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("Failed to get user config directory: %v", err)
 	}
 
 	var dir = filepath.Join(userConfigDir, "AppData", "Local")
-	var logDir = dir + "\\Component Architecture Foundation\\logs\\communication_layer\\"
+	var logDir = dir + shared.RootLogDir
+	return logDir
+}
+
+func getLogger() logging.HoornLogger {
+	logDir := getLogDir() + "\\Communication_Layer\\"
 
 	return logging.NewHoornLogger(
 		common.DEBUG,
@@ -40,9 +46,27 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	coder := coding.JsonMessageCoder{Logger: logger}
+	coder := coding.JsonMessageCoder{Logger: &logger}
 
-	router := networking.NewRouter(logger, &wg, coder)
+	setupLoggingPayload := fmt.Sprintf(`{
+		"action": "setup_logging",
+		"args": [
+			{
+				"type": "string",
+				"value": "%s"
+			},
+			{
+				"type": "int",
+				"value": "%d"
+			},
+            {
+                "type": "string",
+                "value": "%s"
+            }
+		]
+	}`, strings.ReplaceAll(getLogDir()+"\\Components\\", `\`, `\\`), 5, "debug")
+
+	router := networking.NewRouter(&logger, &wg, coder, []byte(setupLoggingPayload))
 	router.Start()
 
 	wg.Wait()

@@ -20,22 +20,21 @@ import (
 )
 
 type Router struct {
-	Logger         logging.HoornLogger
+	Logger         *logging.HoornLogger
 	MessageChannel chan transport.Message
 	Listener       NetworkHandlerInterface
 
-	waitGroup          *sync.WaitGroup
-	lifecycleManager   *lifecycle_managing.LifeCycleManager
-	componentRegistrar *component_registration.ComponentRegistrar
-	payloadToComponent *routing.PayloadToComponent
-	messageHandlers    map[string]message_handling.MessageProcessorInterface
+	waitGroup           *sync.WaitGroup
+	lifecycleManager    *lifecycle_managing.LifeCycleManager
+	componentRegistrar  *component_registration.ComponentRegistrar
+	payloadToComponent  *routing.PayloadToComponent
+	messageHandlers     map[string]message_handling.MessageProcessorInterface
+	setupLoggingPayload []byte
 }
 
-func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
+func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface, setupLoggingPayload []byte) *Router {
 	msgChan := make(chan transport.Message)
 	shutdownChan := make(chan struct{})
-
-	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger}
 
 	server := transport.ComponentID{
 		Title:        shared.ServerName,
@@ -55,6 +54,13 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder codi
 	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
 
+	specialActionPerformer := component_registration.SpecialActionPerformer{
+		Logger:              logger,
+		RequesterInterface:  listener,
+		SetupLoggingPayload: setupLoggingPayload,
+	}
+	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger, SpecialActionPerformer: &specialActionPerformer}
+
 	shutdownComponents := lifecycle_managing.ShutdownComponents{
 		ComponentRegistrar: &componentRegistrar,
 		Logger:             logging.HoornLogger{},
@@ -72,13 +78,14 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder codi
 	}
 
 	router := &Router{
-		Logger:             logger,
-		Listener:           listener,
-		MessageChannel:     msgChan,
-		waitGroup:          wg,
-		lifecycleManager:   &lifecycleManager,
-		payloadToComponent: &routing.PayloadToComponent{Logger: logger},
-		componentRegistrar: &componentRegistrar,
+		Logger:              logger,
+		Listener:            listener,
+		MessageChannel:      msgChan,
+		waitGroup:           wg,
+		lifecycleManager:    &lifecycleManager,
+		payloadToComponent:  &routing.PayloadToComponent{Logger: logger},
+		componentRegistrar:  &componentRegistrar,
+		setupLoggingPayload: setupLoggingPayload,
 	}
 	router.messageHandlers = make(map[string]message_handling.MessageProcessorInterface)
 

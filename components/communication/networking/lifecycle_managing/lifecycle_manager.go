@@ -16,7 +16,7 @@ type ShutdownInterface interface {
 }
 
 type LifeCycleManager struct {
-	Logger            logging.HoornLogger
+	Logger            *logging.HoornLogger
 	WaitGroup         *sync.WaitGroup
 	ShutdownListeners []ShutdownInterface
 }

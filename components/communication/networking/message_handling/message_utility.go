@@ -10,7 +10,7 @@ import (
 )
 
 type MessageUtility struct {
-	Logger       logging.HoornLogger
+	Logger       *logging.HoornLogger
 	Server       transport.ComponentID
 	MessageCoder coding.MessageCoderInterface
 }

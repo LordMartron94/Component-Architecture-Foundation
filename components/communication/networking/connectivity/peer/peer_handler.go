@@ -9,7 +9,7 @@ import (
 )
 
 type PeerHandler struct {
-	Logger            logging.HoornLogger
+	Logger            *logging.HoornLogger
 	activeConnections []Peer
 }
 

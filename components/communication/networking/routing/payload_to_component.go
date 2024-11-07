@@ -9,7 +9,7 @@ import (
 )
 
 type PayloadToComponent struct {
-	Logger logging.HoornLogger
+	Logger *logging.HoornLogger
 }
 
 // SearchForComponent finds the associated component for a message payload. Returns an error if no match is found.

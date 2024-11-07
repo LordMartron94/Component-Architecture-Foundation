@@ -9,7 +9,7 @@ import (
 )
 
 type DefaultMessageHandler struct {
-	Logger                       logging.HoornLogger
+	Logger                       *logging.HoornLogger
 	Listener                     ListenerInterface
 	GetTargetComponentForMessage func(message transport.Message) (transport.ComponentID, error)
 }

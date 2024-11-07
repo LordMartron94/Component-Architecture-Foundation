@@ -1,8 +1,8 @@
 package shared
 
-const MainComponentName = "Middleman Component"
-const NetworkingComponentName = "Networker"
-const RoutingComponentName = "Router"
+const MainComponentName = "Middleman"
+const NetworkingComponentName = "Middleman.Networker"
+const RoutingComponentName = "Middleman.Router"
 
 const ListeningHost = "127.0.0.1"
 const ListeningPort = "3333"
@@ -11,6 +11,8 @@ const EndOfMessageToken = "<eom>"
 
 const ServerName = "Middleman"
 const ServerVersion = "1.0.0"
+
+const RootLogDir = "\\Component Architecture Foundation\\logs"
 
 // ---- Default Server Messages ----
 const ShutdownRequestPayload = `{

@@ -12,7 +12,7 @@ import (
 )
 
 type CommunicationHandler struct {
-	Logger         logging.HoornLogger
+	Logger         *logging.HoornLogger
 	PeerHandler    peer.PeerHandlerInterface
 	MessageUtility message_handling.MessageUtilityInterface
 	MessageCoder   coding.MessageCoderInterface

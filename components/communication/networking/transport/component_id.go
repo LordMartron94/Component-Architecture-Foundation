@@ -22,3 +22,14 @@ func (c *ComponentID) Equal(other ComponentID) bool {
 
 	return titleEqual && versionEqual
 }
+
+// HasCapabilityAction checks if the component contains the ability to do this action.
+// WARNING: Doesn't take into account signature, only action name.
+func (c *ComponentID) HasCapabilityAction(action string) bool {
+	for _, capability := range c.Capabilities {
+		if capability.Name == action {
+			return true
+		}
+	}
+	return false
+}

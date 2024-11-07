@@ -15,7 +15,7 @@ import (
 )
 
 type DefaultConnectionHandler struct {
-	Logger        logging.HoornLogger
+	Logger        *logging.HoornLogger
 	ListenAddress string
 
 	MessageCoder         coding.MessageCoderInterface
@@ -28,7 +28,7 @@ type DefaultConnectionHandler struct {
 	shutdownChan   chan struct{}
 }
 
-func NewDefaultConnectionHandler(logger logging.HoornLogger, listenAddress string, messageCoder coding.MessageCoderInterface, peerHandler peer.PeerHandlerInterface, messageUtility message_handling.MessageUtilityInterface, communicationHandler communication.CommunicationHandlerInterface, messageChannel chan transport.Message, shutdownChan chan struct{}) *DefaultConnectionHandler {
+func NewDefaultConnectionHandler(logger *logging.HoornLogger, listenAddress string, messageCoder coding.MessageCoderInterface, peerHandler peer.PeerHandlerInterface, messageUtility message_handling.MessageUtilityInterface, communicationHandler communication.CommunicationHandlerInterface, messageChannel chan transport.Message, shutdownChan chan struct{}) *DefaultConnectionHandler {
 	handler := &DefaultConnectionHandler{
 		Logger:        logger,
 		ListenAddress: listenAddress,

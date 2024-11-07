@@ -16,7 +16,7 @@ import (
 )
 
 type DataListener struct {
-	Logger         logging.HoornLogger
+	Logger         *logging.HoornLogger
 	PeerHandler    peer.PeerHandlerInterface
 	MessageUtility message_handling.MessageUtilityInterface
 	MessageChannel chan transport.Message

@@ -9,7 +9,7 @@ import (
 )
 
 type TCPHandler struct {
-	Logger               logging.HoornLogger
+	Logger               *logging.HoornLogger
 	MessageChannel       chan transport.Message
 	ConnectionHandler    connectivity.ConnectionHandlerInterface
 	CommunicationHandler communication.CommunicationHandlerInterface
@@ -17,7 +17,7 @@ type TCPHandler struct {
 	shutdownChan chan struct{}
 }
 
-func NewTCPHandler(logger logging.HoornLogger, messageChannel chan transport.Message, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}) *TCPHandler {
+func NewTCPHandler(logger *logging.HoornLogger, messageChannel chan transport.Message, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}) *TCPHandler {
 	return &TCPHandler{
 		Logger:               logger,
 		MessageChannel:       messageChannel,

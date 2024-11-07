@@ -10,7 +10,7 @@ import (
 )
 
 type JsonMessageCoder struct {
-	Logger logging.HoornLogger
+	Logger *logging.HoornLogger
 }
 
 // Decode decodes a bytes json message object to an actual transport.Message object.

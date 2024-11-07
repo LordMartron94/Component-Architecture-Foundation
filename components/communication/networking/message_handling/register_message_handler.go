@@ -9,7 +9,7 @@ import (
 )
 
 type RegisterMessageHandler struct {
-	Logger            logging.HoornLogger
+	Logger            *logging.HoornLogger
 	Listener          ListenerInterface
 	RegisterComponent func(message transport.Message)
 }
