@@ -25,15 +25,17 @@ type Router struct {
 	Listener       NetworkHandlerInterface
 
 	waitGroup          *sync.WaitGroup
-	lifecycleManager   lifecycle_managing.LifeCycleManager
-	componentRegistrar component_registration.ComponentRegistrar
-	payloadToComponent routing.PayloadToComponent
+	lifecycleManager   *lifecycle_managing.LifeCycleManager
+	componentRegistrar *component_registration.ComponentRegistrar
+	payloadToComponent *routing.PayloadToComponent
 	messageHandlers    map[string]message_handling.MessageProcessorInterface
 }
 
 func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
 	msgChan := make(chan transport.Message)
 	shutdownChan := make(chan struct{})
+
+	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger}
 
 	server := transport.ComponentID{
 		Title:        shared.ServerName,
@@ -51,11 +53,17 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder codi
 	}
 
 	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
-
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
+
+	shutdownComponents := lifecycle_managing.ShutdownComponents{
+		ComponentRegistrar: &componentRegistrar,
+		Logger:             logging.HoornLogger{},
+		Listener:           listener,
+	}
 
 	shutdownListeners := make([]lifecycle_managing.ShutdownInterface, 0)
 	shutdownListeners = append(shutdownListeners, listener)
+	shutdownListeners = append(shutdownListeners, &shutdownComponents)
 
 	lifecycleManager := lifecycle_managing.LifeCycleManager{
 		Logger:            logger,
@@ -63,16 +71,14 @@ func NewRouter(logger logging.HoornLogger, wg *sync.WaitGroup, messageCoder codi
 		WaitGroup:         wg,
 	}
 
-	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger}
-
 	router := &Router{
 		Logger:             logger,
 		Listener:           listener,
 		MessageChannel:     msgChan,
 		waitGroup:          wg,
-		lifecycleManager:   lifecycleManager,
-		payloadToComponent: routing.PayloadToComponent{Logger: logger},
-		componentRegistrar: componentRegistrar,
+		lifecycleManager:   &lifecycleManager,
+		payloadToComponent: &routing.PayloadToComponent{Logger: logger},
+		componentRegistrar: &componentRegistrar,
 	}
 	router.messageHandlers = make(map[string]message_handling.MessageProcessorInterface)
 

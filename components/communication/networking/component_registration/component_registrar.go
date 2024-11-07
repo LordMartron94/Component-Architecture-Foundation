@@ -22,8 +22,21 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) {
 	c.registeredComponents = append(c.registeredComponents, message.Requester)
 }
 
+func (c *ComponentRegistrar) RemoveRegisteredComponent(id transport.ComponentID) {
+	for i, component := range c.registeredComponents {
+		if component.Equal(id) {
+			c.registeredComponents = append(c.registeredComponents[:i], c.registeredComponents[i+1:]...)
+			break
+		}
+	}
+}
+
+// GetRegisteredComponents returns a copy of the current registered components.
 func (c *ComponentRegistrar) GetRegisteredComponents() []transport.ComponentID {
-	return c.registeredComponents
+	num := len(c.registeredComponents)
+	components := make([]transport.ComponentID, num)
+	copy(components, c.registeredComponents)
+	return components
 }
 
 func containsComponentID(s []transport.ComponentID, e transport.ComponentID) bool {
