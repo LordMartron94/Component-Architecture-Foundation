@@ -13,6 +13,10 @@ const ServerName = "Middleman"
 const ServerVersion = "1.0.0"
 
 // ---- Default Server Messages ----
+const ShutdownRequestPayload = `{
+		"action": "shutdown",
+		"args": []
+	}`
 
 // DefaultSuccessResponsePayload The Default success response for the server.
 // Don't forget to set the target component and time sent.
