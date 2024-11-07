@@ -26,11 +26,11 @@ func (l *LifeCycleManager) ListenForTermination() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGKILL, syscall.SIGQUIT)
 	<-sigs
 	l.Logger.Info("Received termination signal, shutting down server gracefully...", false, shared.MainComponentName)
-	l.shutdownServer()
+	l.ShutdownServer()
 	l.Logger.Info("Server shutdown complete.", false, shared.MainComponentName)
 }
 
-func (l *LifeCycleManager) shutdownServer() {
+func (l *LifeCycleManager) ShutdownServer() {
 	for _, listener := range l.ShutdownListeners {
 		err := listener.Shutdown()
 		if err != nil {

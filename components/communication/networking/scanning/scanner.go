@@ -28,6 +28,8 @@ func NewScanner(r io.Reader, delimiter string) *Scanner {
 // Scan advances the Scanner to the next token, returning true if a token was found,
 // and false otherwise (either because the end of the input was reached or an error occurred).
 func (s *Scanner) Scan() (bool, error) {
+	s.buffer = s.buffer[:0]
+
 	for {
 		// Read byte by byte until the delimiter or EOF is reached
 		for {

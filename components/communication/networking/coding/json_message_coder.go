@@ -16,6 +16,8 @@ type JsonMessageCoder struct {
 // Decode decodes a bytes json message object to an actual transport.Message object.
 func (j JsonMessageCoder) Decode(message []byte) (transport.Message, error) {
 	// Unmarshal JSON string into a map[string]interface{}
+	j.Logger.Debug(fmt.Sprintf("Received (attempting to decode): '%s'", message), false, shared.NetworkingComponentName)
+
 	var unmarshalledMessage transport.Message
 	err := json.Unmarshal(message, &unmarshalledMessage)
 	if err != nil {

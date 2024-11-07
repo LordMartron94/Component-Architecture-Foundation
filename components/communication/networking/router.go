@@ -91,6 +91,10 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Listener:          listener,
 		RegisterComponent: componentRegistrar.RegisterComponent,
 	})
+	router.RegisterMessageHandler("shutdown", &message_handling.ShutdownMessageHandler{
+		Logger:           logger,
+		LifeCycleManager: lifecycleManager,
+	})
 	router.RegisterMessageHandler("__default__", &message_handling.DefaultMessageHandler{
 		Logger:                       logger,
 		Listener:                     listener,
