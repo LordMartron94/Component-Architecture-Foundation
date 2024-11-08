@@ -89,6 +89,10 @@ func (d *DefaultConnectionHandler) StartListenLoop() error {
 	}
 }
 
+func (d *DefaultConnectionHandler) CloseConnections() {
+	d.PeerHandler.ClosePeerConnections()
+}
+
 func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	scanner := scanning.NewScanner(conn, shared.EndOfMessageToken)
 	scanned, _ := scanner.Scan()

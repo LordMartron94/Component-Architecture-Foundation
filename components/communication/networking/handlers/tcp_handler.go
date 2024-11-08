@@ -29,6 +29,7 @@ func NewTCPHandler(logger *logging.HoornLogger, messageChannel chan transport.Me
 
 func (tcp *TCPHandler) Shutdown() error {
 	tcp.Logger.Info("Shutting down Listener", false, shared.NetworkingComponentName)
+	tcp.ConnectionHandler.CloseConnections()
 	close(tcp.MessageChannel)
 	close(tcp.shutdownChan)
 	return nil

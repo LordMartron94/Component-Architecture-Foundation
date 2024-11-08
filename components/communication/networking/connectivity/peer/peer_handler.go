@@ -6,6 +6,7 @@ import (
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/transport"
+	"github.com/component-architecture-foundation/shared"
 )
 
 type PeerHandler struct {
@@ -42,4 +43,15 @@ func (p *PeerHandler) FindPeerByComponentID(id transport.ComponentID) (Peer, err
 	}
 
 	return Peer{}, fmt.Errorf("peer not found by component ID: %v", id)
+}
+
+func (p *PeerHandler) ClosePeerConnections() {
+	p.Logger.Info("Closing all peer connections", false, shared.NetworkingComponentName)
+
+	for _, peer := range p.activeConnections {
+		err := peer.Connection.Close()
+		if err != nil {
+			p.Logger.Error(fmt.Sprintf("Error closing peer connection: %v", err), false, shared.NetworkingComponentName)
+		}
+	}
 }
