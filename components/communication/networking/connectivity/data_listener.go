@@ -74,15 +74,13 @@ func (d *DataListener) ListenForData(conn net.Conn, peer peer.Peer, scanner *sca
 				if err != nil {
 					err = d.sendResponse(decodedMessage.Requester, []byte(shared.InvalidRequestResponsePayload))
 					if err != nil {
-						d.Logger.Error(fmt.Sprintf("Failed to send failure response: '%s'", err.Error()), false, shared.NetworkingComponentName)
-						continue
+						d.Logger.Warn(fmt.Sprintf("Failed to send failure response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 					}
 				}
 
 				err = d.sendResponse(decodedMessage.Requester, []byte(shared.DefaultSuccessResponsePayload))
 				if err != nil {
-					d.Logger.Error(fmt.Sprintf("Failed to send success response: '%s'", err.Error()), false, shared.NetworkingComponentName)
-					continue
+					d.Logger.Warn(fmt.Sprintf("Failed to send success response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 				}
 
 				d.MessageChannel <- decodedMessage
