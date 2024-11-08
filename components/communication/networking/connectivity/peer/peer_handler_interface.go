@@ -11,4 +11,5 @@ type PeerHandlerInterface interface {
 	RemovePeer(addr net.Addr)
 	FindPeerByComponentID(id transport.ComponentID) (Peer, error)
 	ClosePeerConnections()
+	GetActiveConnectionsNumber() int
 }

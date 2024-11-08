@@ -6,7 +6,7 @@ const RoutingComponentName = "Middleman.Router"
 const InfoComponentName = "Middleman.Info"
 
 const ListeningHost = "127.0.0.1"
-const ListeningPort = "3333"
+const ListeningPort = "50000"
 const ListeningAddress = ListeningHost + ":" + ListeningPort
 const EndOfMessageToken = "<eom>"
 

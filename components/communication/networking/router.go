@@ -41,16 +41,16 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Capabilities: nil,
 	}
 
-	peerHandler := peer.PeerHandler{Logger: logger}
+	peerHandler := peer.NewPeerHandler(logger)
 	messageUtility := message_handling.MessageUtility{Logger: logger, MessageCoder: messageCoder, Server: server}
 	communicationHandler := communication.CommunicationHandler{
 		Logger:         logger,
-		PeerHandler:    &peerHandler,
+		PeerHandler:    peerHandler,
 		MessageUtility: &messageUtility,
 		MessageCoder:   messageCoder,
 	}
 
-	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, &peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
+	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
 
 	specialActionPerformer := component_registration.SpecialActionPerformer{
@@ -161,7 +161,7 @@ func (r *Router) processMessage(message transport.Message) {
 
 func (r *Router) info() {
 	for {
-		r.Logger.Info(fmt.Sprintf("Router is running. Components registered: %d", len(r.componentRegistrar.GetRegisteredComponents())), false, shared.InfoComponentName)
+		r.Logger.Info(fmt.Sprintf("Router is running. Components registered: %d | Active peers: %d", len(r.componentRegistrar.GetRegisteredComponents()), r.Listener.GetActiveConnectionsNumber()), false, shared.InfoComponentName)
 		time.Sleep(time.Second * 10)
 	}
 }

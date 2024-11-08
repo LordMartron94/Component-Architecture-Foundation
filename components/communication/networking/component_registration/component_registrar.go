@@ -29,6 +29,8 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) {
 }
 
 func (c *ComponentRegistrar) RemoveRegisteredComponent(id transport.ComponentID) {
+	c.Logger.Debug(fmt.Sprintf("Component %s is being unregistered.", id.Title), false, shared.MainComponentName)
+
 	for i, component := range c.registeredComponents {
 		if component.Equal(id) {
 			c.registeredComponents = append(c.registeredComponents[:i], c.registeredComponents[i+1:]...)

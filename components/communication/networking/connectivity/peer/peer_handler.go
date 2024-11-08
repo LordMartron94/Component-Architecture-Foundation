@@ -14,6 +14,13 @@ type PeerHandler struct {
 	activeConnections []Peer
 }
 
+func NewPeerHandler(logger *logging.HoornLogger) *PeerHandler {
+	return &PeerHandler{
+		Logger:            logger,
+		activeConnections: make([]Peer, 0),
+	}
+}
+
 func (p *PeerHandler) AddPeer(conn net.Conn, component transport.ComponentID) Peer {
 	peer := Peer{
 		Address:             conn.RemoteAddr(),
@@ -26,7 +33,13 @@ func (p *PeerHandler) AddPeer(conn net.Conn, component transport.ComponentID) Pe
 	return peer
 }
 
+func (p *PeerHandler) GetActiveConnectionsNumber() int {
+	return len(p.activeConnections)
+}
+
 func (p *PeerHandler) RemovePeer(addr net.Addr) {
+	p.Logger.Debug(fmt.Sprintf("Removing peer by address: %v", addr.String()), false, shared.NetworkingComponentName)
+
 	for i, peer := range p.activeConnections {
 		if peer.Address.String() == addr.String() {
 			p.activeConnections = append(p.activeConnections[:i], p.activeConnections[i+1:]...)

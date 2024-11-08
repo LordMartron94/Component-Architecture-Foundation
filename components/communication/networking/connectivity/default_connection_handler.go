@@ -89,6 +89,10 @@ func (d *DefaultConnectionHandler) StartListenLoop() error {
 	}
 }
 
+func (d *DefaultConnectionHandler) GetActiveConnectionsNumber() int {
+	return d.PeerHandler.GetActiveConnectionsNumber()
+}
+
 func (d *DefaultConnectionHandler) CloseConnections() {
 	d.PeerHandler.ClosePeerConnections()
 }

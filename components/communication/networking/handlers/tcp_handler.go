@@ -35,6 +35,10 @@ func (tcp *TCPHandler) Shutdown() error {
 	return nil
 }
 
+func (tcp *TCPHandler) GetActiveConnectionsNumber() int {
+	return tcp.ConnectionHandler.GetActiveConnectionsNumber()
+}
+
 func (tcp *TCPHandler) StartListenLoop() error {
 	return tcp.ConnectionHandler.StartListenLoop()
 }
