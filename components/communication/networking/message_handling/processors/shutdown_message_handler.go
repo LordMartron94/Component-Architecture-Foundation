@@ -1,4 +1,4 @@
-package message_handling
+package processors
 
 import (
 	"github.com/component-architecture-foundation/logging"

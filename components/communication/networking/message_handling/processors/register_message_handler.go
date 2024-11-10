@@ -1,16 +1,17 @@
-package message_handling
+package processors
 
 import (
 	"fmt"
 
 	"github.com/component-architecture-foundation/logging"
+	"github.com/component-architecture-foundation/networking/message_handling"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
 
 type RegisterMessageHandler struct {
 	Logger            *logging.HoornLogger
-	Listener          ListenerInterface
+	Listener          message_handling.ListenerInterface
 	RegisterComponent func(message transport.Message)
 }
 

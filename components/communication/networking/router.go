@@ -14,6 +14,7 @@ import (
 	"github.com/component-architecture-foundation/networking/handlers"
 	"github.com/component-architecture-foundation/networking/lifecycle_managing"
 	"github.com/component-architecture-foundation/networking/message_handling"
+	"github.com/component-architecture-foundation/networking/message_handling/processors"
 	"github.com/component-architecture-foundation/networking/routing"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
@@ -28,7 +29,7 @@ type Router struct {
 	lifecycleManager   *lifecycle_managing.LifeCycleManager
 	componentRegistrar *component_registration.ComponentRegistrar
 	payloadToComponent *routing.PayloadToComponent
-	messageHandlers    map[string]message_handling.MessageProcessorInterface
+	messageHandlers    map[string]processors.MessageProcessorInterface
 }
 
 func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
@@ -85,14 +86,14 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		payloadToComponent: &routing.PayloadToComponent{Logger: logger},
 		componentRegistrar: &componentRegistrar,
 	}
-	router.messageHandlers = make(map[string]message_handling.MessageProcessorInterface)
+	router.messageHandlers = make(map[string]processors.MessageProcessorInterface)
 
-	router.RegisterMessageHandler("register", &message_handling.RegisterMessageHandler{
+	router.RegisterMessageHandler("register", &processors.RegisterMessageHandler{
 		Logger:            logger,
 		Listener:          listener,
 		RegisterComponent: componentRegistrar.RegisterComponent,
 	})
-	router.RegisterMessageHandler("shutdown", &message_handling.ShutdownMessageHandler{
+	router.RegisterMessageHandler("shutdown", &processors.ShutdownMessageHandler{
 		Logger:           logger,
 		LifeCycleManager: lifecycleManager,
 	})
@@ -101,7 +102,7 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Listener:                     listener,
 		GetTargetComponentForMessage: router.getTargetComponentForMessage,
 	})
-	router.RegisterMessageHandler("unregister", &message_handling.UnregisterMessageHandler{
+	router.RegisterMessageHandler("unregister", &processors.UnregisterMessageHandler{
 		Logger:             logger,
 		ComponentRegistrar: &componentRegistrar,
 	})
@@ -109,7 +110,7 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	return router
 }
 
-func (r *Router) RegisterMessageHandler(action string, handler message_handling.MessageProcessorInterface) {
+func (r *Router) RegisterMessageHandler(action string, handler processors.MessageProcessorInterface) {
 	r.messageHandlers[action] = handler
 }
 
