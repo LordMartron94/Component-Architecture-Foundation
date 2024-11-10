@@ -100,7 +100,7 @@ func (d *DefaultConnectionHandler) CloseConnections() {
 }
 
 func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
-	scanner := scanning.NewScanner(conn, shared.EndOfMessageToken)
+	scanner := scanning.NewScanner(conn, shared.EndOfMessageToken, d.Logger)
 
 	shutdownChan := make(chan struct{})
 	scanned, _ := scanner.Scan(shutdownChan)

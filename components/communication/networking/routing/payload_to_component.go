@@ -15,7 +15,7 @@ type PayloadToComponent struct {
 // SearchForComponent finds the associated component for a message payload. Returns an error if no match is found.
 func (p *PayloadToComponent) SearchForComponent(payload transport.MessagePayload, components []transport.ComponentID) (transport.ComponentID, error) {
 	for _, component := range components {
-		p.Logger.Debug(fmt.Sprintf("Searching for component with ID '%s'", component.Title), false, shared.RoutingComponentName)
+		p.Logger.Debug(fmt.Sprintf("Checking component with ID '%s'", component.Title), false, shared.RoutingComponentName)
 		for _, capability := range component.Capabilities {
 			p.Logger.Debug(fmt.Sprintf("Checking capability '%s' for component '%s'", capability.Name, component.Title), false, shared.RoutingComponentName)
 			if capability.Name != payload.Action {

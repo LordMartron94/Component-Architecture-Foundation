@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/connectivity/peer"
@@ -26,17 +27,22 @@ type DataListener struct {
 }
 
 func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) {
-	dataChan := make(chan []byte)
+	dataChan := make(chan []byte, 1) // Buffered channel
+	stopScanning := make(chan struct{})
+	var bufferMutex sync.Mutex // Mutex for buffer access
+
 	go func() {
 		for {
-			if !peer.CheckConnection() {
-				continue
+			select {
+			case <-stopScanning:
+				break
 			}
 
-			scanned, err := scanner.Scan(d.shutdownChan)
-
+			scanned, err := scanner.Scan(stopScanning)
 			if err != nil {
-				d.handleScanError(err, peer)
+				if d.handleScanError(err, peer) {
+					close(stopScanning)
+				}
 				continue
 			}
 
@@ -44,18 +50,20 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 				continue
 			}
 
+			bufferMutex.Lock()
 			dataChan <- scanner.Bytes()
+			bufferMutex.Unlock()
 		}
 	}()
 
 	for {
 		select {
 		case <-d.shutdownChan:
+			close(stopScanning)
 			return
 		case data := <-dataChan:
 			decodedMessage, err := d.MessageUtility.DecodeMessage(data)
 			d.sendHandleResponse(decodedMessage, err)
-
 			d.MessageChannel <- decodedMessage
 		}
 	}
@@ -72,11 +80,13 @@ func (d *DataListener) sendHandleResponse(decodedMessage transport.Message, deco
 	return
 }
 
-func (d *DataListener) handleScanError(err error, peer peer.Peer) {
+// handleScanError handles errors during scanning and logs them. It also removes the peer from the peer handler if the connection is closed.
+// Returns true if the scanning should stop for this connection.
+func (d *DataListener) handleScanError(err error, peer peer.Peer) bool {
 	if err == io.EOF {
 		d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 		d.PeerHandler.RemovePeer(peer.Address)
-		return
+		return true
 	}
 
 	var operr *net.OpError
@@ -84,9 +94,10 @@ func (d *DataListener) handleScanError(err error, peer peer.Peer) {
 		if operr.Op == "read" && strings.Contains(operr.Err.Error(), "wsarecv") {
 			d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 			d.PeerHandler.RemovePeer(peer.Address)
-			return
+			return true
 		}
 	}
 
 	d.Logger.Error(fmt.Sprintf("Error reading data: %s", err), false, shared.NetworkingComponentName)
+	return false
 }

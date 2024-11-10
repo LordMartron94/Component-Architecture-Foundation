@@ -3,12 +3,17 @@ package scanning
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+
+	"github.com/component-architecture-foundation/logging"
+	"github.com/component-architecture-foundation/shared"
 )
 
 // Scanner is a custom scanner that reads from an io.Reader and splits the input
 // based on a custom delimiter string.
 type Scanner struct {
+	Logger    *logging.HoornLogger
 	reader    *bufio.Reader
 	delimiter []byte
 	buffer    []byte
@@ -16,12 +21,13 @@ type Scanner struct {
 }
 
 // NewScanner creates a new Scanner with the given io.Reader and delimiter string.
-func NewScanner(r io.Reader, delimiter string) *Scanner {
+func NewScanner(r io.Reader, delimiter string, logger *logging.HoornLogger) *Scanner {
 	return &Scanner{
 		reader:    bufio.NewReader(r),
 		delimiter: []byte(delimiter),
 		buffer:    make([]byte, 0),
 		eof:       false,
+		Logger:    logger,
 	}
 }
 
@@ -35,6 +41,7 @@ func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 		select {
 		case <-shutdownChan:
 			// Shutdown signal received, return immediately
+			s.Logger.Info("Scanner shutting down", false, shared.ScannerComponentName)
 			return false, nil
 		default:
 			// Read byte by byte until the delimiter or EOF is reached
@@ -42,6 +49,7 @@ func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 				select {
 				case <-shutdownChan:
 					// Shutdown signal received, return immediately
+					s.Logger.Info("Scanner shutting down", false, shared.ScannerComponentName)
 					return false, nil
 				default:
 					b, err := s.reader.ReadByte()
@@ -70,7 +78,8 @@ func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 
 // Bytes returns the current token as bytes.
 func (s *Scanner) Bytes() []byte {
-	return s.buffer
+	s.Logger.Debug(fmt.Sprintf("Current bytes: %s", s.buffer), false, shared.ScannerComponentName)
+	return append([]byte(nil), s.buffer...) // Create a copy to avoid data races
 }
 
 // Text returns the current token as a string.
