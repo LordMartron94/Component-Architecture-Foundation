@@ -19,13 +19,13 @@ type ComponentRegistrar struct {
 }
 
 func (c *ComponentRegistrar) RegisterComponent(message transport.Message) {
-	if containsComponentID(c.registeredComponents, message.Requester) {
+	if containsComponentID(c.registeredComponents, *message.Requester) {
 		c.Logger.Info(fmt.Sprintf("Component %s is already registered.", message.Requester.Title), false, shared.MainComponentName)
 		return
 	}
 
-	c.SpecialActionPerformer.PerformAnySpecialActions(message.Requester)
-	c.registeredComponents = append(c.registeredComponents, message.Requester)
+	c.SpecialActionPerformer.PerformAnySpecialActions(*message.Requester)
+	c.registeredComponents = append(c.registeredComponents, *message.Requester)
 }
 
 func (c *ComponentRegistrar) RemoveRegisteredComponent(id transport.ComponentID) {

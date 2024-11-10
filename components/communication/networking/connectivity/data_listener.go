@@ -25,66 +25,68 @@ type DataListener struct {
 	shutdownChan chan struct{}
 }
 
-func (d *DataListener) ListenForData(conn net.Conn, peer peer.Peer, scanner *scanning.Scanner) {
+func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) {
+	dataChan := make(chan []byte)
+	go func() {
+		for {
+			if !peer.CheckConnection() {
+				continue
+			}
+
+			scanned, err := scanner.Scan(d.shutdownChan)
+
+			if err != nil {
+				d.handleScanError(err, peer)
+				continue
+			}
+
+			if !scanned {
+				continue
+			}
+
+			dataChan <- scanner.Bytes()
+		}
+	}()
+
 	for {
 		select {
 		case <-d.shutdownChan:
-			err := conn.Close()
-			if err != nil {
-				d.Logger.Error(fmt.Sprintf("There was an error closing the connection: '%s'", err.Error()), false, shared.NetworkingComponentName)
-			}
 			return
-		default:
-			for {
-				scanned, err := scanner.Scan()
+		case data := <-dataChan:
+			decodedMessage, err := d.MessageUtility.DecodeMessage(data)
+			d.sendHandleResponse(decodedMessage, err)
 
-				if err != nil {
-					if err == io.EOF {
-						d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
-						d.PeerHandler.RemovePeer(peer.Address)
-						return
-					}
-
-					var operr *net.OpError
-					if errors.As(err, &operr) {
-						if operr.Op == "read" && strings.Contains(operr.Err.Error(), "wsarecv") {
-							d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
-							d.PeerHandler.RemovePeer(peer.Address)
-							return
-						}
-					}
-
-					d.Logger.Error(fmt.Sprintf("Error reading data: %s", err), false, shared.NetworkingComponentName)
-					continue
-				}
-
-				if !scanned {
-					continue
-				}
-
-				data := scanner.Bytes()
-
-				if err != nil {
-					d.Logger.Error(fmt.Sprintf("Failed to read data: '%s'", err.Error()), false, shared.NetworkingComponentName)
-					continue
-				}
-
-				decodedMessage, err := d.MessageUtility.DecodeMessage(data)
-
-				if err != nil {
-					err = d.sendResponse(decodedMessage.Requester, []byte(shared.InvalidRequestResponsePayload))
-					if err != nil {
-						d.Logger.Warn(fmt.Sprintf("Failed to send failure response: '%s'", err.Error()), false, shared.NetworkingComponentName)
-					}
-				}
-
-				err = d.sendResponse(decodedMessage.Requester, []byte(shared.DefaultSuccessResponsePayload))
-				if err != nil {
-					d.Logger.Warn(fmt.Sprintf("Failed to send success response: '%s'", err.Error()), false, shared.NetworkingComponentName)
-				}
-
-				d.MessageChannel <- decodedMessage
-			}
+			d.MessageChannel <- decodedMessage
 		}
 	}
+}
+
+func (d *DataListener) sendHandleResponse(decodedMessage transport.Message, decodeError error) {
+	if decodeError != nil {
+		d.sendResponse(*decodedMessage.Requester, []byte(shared.InvalidRequestResponsePayload), *decodedMessage.UniqueID)
+		return
+	}
+
+	d.sendResponse(*decodedMessage.Requester, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
+
+	return
+}
+
+func (d *DataListener) handleScanError(err error, peer peer.Peer) {
+	if err == io.EOF {
+		d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
+		d.PeerHandler.RemovePeer(peer.Address)
+		return
+	}
+
+	var operr *net.OpError
+	if errors.As(err, &operr) {
+		if operr.Op == "read" && strings.Contains(operr.Err.Error(), "wsarecv") {
+			d.Logger.Info(fmt.Sprintf("Connection closed by peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
+			d.PeerHandler.RemovePeer(peer.Address)
+			return
+		}
+	}
+
+	d.Logger.Error(fmt.Sprintf("Error reading data: %s", err), false, shared.NetworkingComponentName)
 }

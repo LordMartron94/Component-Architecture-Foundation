@@ -62,6 +62,12 @@ func (p *PeerHandler) ClosePeerConnections() {
 	p.Logger.Info("Closing all peer connections", false, shared.NetworkingComponentName)
 
 	for _, peer := range p.activeConnections {
+		// Check if the connection is already closed
+		if !peer.CheckConnection() {
+			p.Logger.Debug(fmt.Sprintf("Peer connection already closed: %v", peer.Connection.RemoteAddr()), false, shared.NetworkingComponentName)
+			continue // Skip to the next connection
+		}
+
 		err := peer.Connection.Close()
 		if err != nil {
 			p.Logger.Error(fmt.Sprintf("Error closing peer connection: %v", err), false, shared.NetworkingComponentName)

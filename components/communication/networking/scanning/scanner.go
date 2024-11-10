@@ -27,34 +27,44 @@ func NewScanner(r io.Reader, delimiter string) *Scanner {
 
 // Scan advances the Scanner to the next token, returning true if a token was found,
 // and false otherwise (either because the end of the input was reached or an error occurred).
-func (s *Scanner) Scan() (bool, error) {
+func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 	s.buffer = s.buffer[:0]
 
 	for {
-		// Read byte by byte until the delimiter or EOF is reached
-		for {
-			b, err := s.reader.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					s.eof = true
-					return len(s.buffer) > 0, err // Return true if there's any remaining data
+		// Select statement to handle shutdown signal and check connection status
+		select {
+		case <-shutdownChan:
+			// Shutdown signal received, return immediately
+			return false, nil
+		default:
+			// Read byte by byte until the delimiter or EOF is reached
+			for {
+				select {
+				case <-shutdownChan:
+					// Shutdown signal received, return immediately
+					return false, nil
+				default:
+					b, err := s.reader.ReadByte()
+					if err != nil {
+						if err == io.EOF {
+							s.eof = true
+							// Return true if there's any remaining data in the buffer
+							return len(s.buffer) > 0, err
+						}
+
+						return false, err
+					}
+
+					s.buffer = append(s.buffer, b)
+
+					if bytes.HasSuffix(s.buffer, s.delimiter) {
+						// Found the delimiter, trim it and return
+						s.buffer = bytes.TrimSuffix(s.buffer, s.delimiter)
+						return len(s.buffer) > 0 || s.eof, nil
+					}
 				}
-
-				return false, err
-			}
-
-			s.buffer = append(s.buffer, b)
-
-			if bytes.HasSuffix(s.buffer, s.delimiter) {
-				break // Found the delimiter
 			}
 		}
-
-		// Trim the delimiter from the buffer
-		s.buffer = bytes.TrimSuffix(s.buffer, s.delimiter)
-
-		// Return true even for empty tokens if it's the last one
-		return len(s.buffer) > 0 || s.eof, nil
 	}
 }
 

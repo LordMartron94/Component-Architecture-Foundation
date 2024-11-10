@@ -15,11 +15,14 @@ type MessageUtility struct {
 	MessageCoder coding.MessageCoderInterface
 }
 
+// DecodeMessage decodes a given byte slice into a transport.Message.
+// If the decoding fails, an error is returned.
+// It does return the decoded message.
 func (m *MessageUtility) DecodeMessage(data []byte) (transport.Message, error) {
 	decodedMessage, err := m.MessageCoder.Decode(data)
 	if err != nil {
 		m.Logger.Error(fmt.Sprintf("Failed to decode message: '%s'", err.Error()), false, shared.NetworkingComponentName)
-		return transport.Message{}, err
+		return decodedMessage, err
 	}
 
 	return decodedMessage, nil

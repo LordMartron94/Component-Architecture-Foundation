@@ -51,7 +51,7 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	}
 
 	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
-	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan)
+	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan, wg)
 
 	specialActionPerformer := component_registration.SpecialActionPerformer{
 		Logger:             logger,
@@ -61,13 +61,14 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 
 	shutdownComponents := lifecycle_managing.ShutdownComponents{
 		ComponentRegistrar: &componentRegistrar,
-		Logger:             logging.HoornLogger{},
+		Logger:             logger,
 		Listener:           listener,
 	}
 
 	shutdownListeners := make([]lifecycle_managing.ShutdownInterface, 0)
-	shutdownListeners = append(shutdownListeners, listener)
-	shutdownListeners = append(shutdownListeners, &shutdownComponents)
+
+	wg.Add(2)
+	shutdownListeners = append(shutdownListeners, &shutdownComponents, listener)
 
 	lifecycleManager := lifecycle_managing.LifeCycleManager{
 		Logger:            logger,
@@ -100,6 +101,10 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Listener:                     listener,
 		GetTargetComponentForMessage: router.getTargetComponentForMessage,
 	})
+	router.RegisterMessageHandler("unregister", &message_handling.UnregisterMessageHandler{
+		Logger:             logger,
+		ComponentRegistrar: &componentRegistrar,
+	})
 
 	return router
 }
@@ -109,11 +114,10 @@ func (r *Router) RegisterMessageHandler(action string, handler message_handling.
 }
 
 func (r *Router) getTargetComponentForMessage(message transport.Message) (transport.ComponentID, error) {
-	return r.payloadToComponent.SearchForComponent(message.Payload, r.componentRegistrar.GetRegisteredComponents())
+	return r.payloadToComponent.SearchForComponent(*message.Payload, r.componentRegistrar.GetRegisteredComponents())
 }
 
 func (r *Router) Start() {
-	r.waitGroup.Add(1)
 	go func() {
 		err := r.Listener.StartListenLoop()
 		if err != nil {

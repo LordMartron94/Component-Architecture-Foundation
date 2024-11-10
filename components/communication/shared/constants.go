@@ -79,3 +79,17 @@ const NoMatchFoundResponsePayload = `{
 			}
 		]
 	}`
+
+const InvalidFirstActionPayload = `{
+		"action": "error",
+		"args": [
+			{
+				"type": "string",
+				"value": "Your first action must be 'register', please try again."
+			},
+			{
+				"type": "int",
+				"value": "356"
+			}
+		]
+	}`

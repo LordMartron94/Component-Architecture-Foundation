@@ -29,7 +29,7 @@ func (d DefaultMessageHandler) ProcessMessage(message transport.Message) error {
 		return nil
 	}
 
-	err = d.Listener.SendRequest(targetComponent, message.Payload)
+	err = d.Listener.SendRequest(targetComponent, *message.Payload)
 
 	if err != nil {
 		d.Logger.Error(fmt.Sprintf("Failed to send request to '%s@%s': %s", targetComponent.Title, targetComponent.Version, err.Error()), false, shared.MainComponentName)

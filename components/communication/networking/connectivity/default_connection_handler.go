@@ -1,6 +1,7 @@
 package connectivity
 
 import (
+	"errors"
 	"fmt"
 	"net"
 
@@ -99,7 +100,9 @@ func (d *DefaultConnectionHandler) CloseConnections() {
 
 func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	scanner := scanning.NewScanner(conn, shared.EndOfMessageToken)
-	scanned, _ := scanner.Scan()
+
+	shutdownChan := make(chan struct{})
+	scanned, _ := scanner.Scan(shutdownChan)
 
 	if !scanned {
 		d.Logger.Error(fmt.Sprintf("Failed to read registration data from connection"), false, shared.NetworkingComponentName)
@@ -117,7 +120,18 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	decodedData, err := d.MessageUtility.DecodeMessage(data)
 
 	if err != nil {
-		d.Logger.Error(fmt.Sprintf("Failed to decode registration data: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		if decodedData.Requester == nil {
+			d.Logger.Warn(fmt.Sprintf("Cannot send response because requester id is missing: %s", err.Error()), false, shared.NetworkingComponentName)
+			conn.Close()
+			return
+		}
+
+		var missingValueError coding.MissingValueError
+		if errors.As(err, &missingValueError) {
+			peer := d.PeerHandler.AddPeer(conn, *decodedData.Requester) // Necessary to add peer before sending response
+			d.sendResponse(*decodedData.Requester, []byte(shared.InvalidRequestResponsePayload), "__not a uuid because uuid field can be missing__")
+			d.PeerHandler.RemovePeer(peer.Address)
+		}
 		conn.Close()
 		return
 	}
@@ -135,13 +149,17 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
 	d.MessageChannel <- decodedData
 
-	peer := d.PeerHandler.AddPeer(conn, decodedData.Requester)
+	peer := d.PeerHandler.AddPeer(conn, *decodedData.Requester)
 
 	d.Logger.Info(fmt.Sprintf("New connection from '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
 
-	go d.DataListener.ListenForData(conn, peer, scanner)
+	go d.DataListener.ListenForData(peer, scanner)
 }
 
 func (d *DefaultConnectionHandler) sendResponse(component transport.ComponentID, payload []byte, targetUUID string) {
 	err := d.CommunicationHandler.SendResponse(component, payload, targetUUID)
+
+	if err != nil {
+		d.Logger.Warn(fmt.Sprintf("Failed to send response: '%s'", err.Error()), false, shared.NetworkingComponentName)
+	}
 }

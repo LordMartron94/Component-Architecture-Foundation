@@ -56,7 +56,7 @@ func main() {
 
 	coder := coding.JsonMessageCoder{Logger: &logger}
 
-	router := networking.NewRouter(&logger, &wg, coder)
+	router := networking.NewRouter(&logger, &wg, &coder)
 	router.Start()
 
 	wg.Wait()
