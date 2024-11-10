@@ -20,7 +20,7 @@ func (r *RegisterMessageHandler) ProcessMessage(message transport.Message) error
 	r.Logger.Debug(fmt.Sprintf("Capabilities: %s", capabilities), false, shared.MainComponentName)
 	r.RegisterComponent(message)
 
-	err := r.Listener.SendResponse(message.Requester, []byte(shared.RegisterSuccessResponsePayload))
+	err := r.Listener.SendResponse(*message.Requester, []byte(shared.RegisterSuccessResponsePayload), *message.UniqueID)
 	if err != nil {
 		r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
 		return err

@@ -21,7 +21,7 @@ type DataListener struct {
 	MessageUtility message_handling.MessageUtilityInterface
 	MessageChannel chan transport.Message
 
-	sendResponse func(component transport.ComponentID, payload []byte) error
+	sendResponse func(component transport.ComponentID, payload []byte, targetUUID string)
 	shutdownChan chan struct{}
 }
 

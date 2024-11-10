@@ -126,6 +126,8 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 	if actionRequested != "register" {
 		d.Logger.Error(fmt.Sprintf("Invalid first action requested: '%s'", actionRequested), false, shared.NetworkingComponentName)
+		d.sendResponse(*decodedData.Requester, []byte(shared.InvalidFirstActionPayload), *decodedData.UniqueID)
+
 		conn.Close()
 		return
 	}
@@ -140,6 +142,6 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	go d.DataListener.ListenForData(conn, peer, scanner)
 }
 
-func (d *DefaultConnectionHandler) sendResponse(component transport.ComponentID, payload []byte) error {
-	return d.CommunicationHandler.SendResponse(component, payload)
+func (d *DefaultConnectionHandler) sendResponse(component transport.ComponentID, payload []byte, targetUUID string) {
+	err := d.CommunicationHandler.SendResponse(component, payload, targetUUID)
 }

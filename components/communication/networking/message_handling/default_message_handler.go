@@ -19,7 +19,7 @@ func (d DefaultMessageHandler) ProcessMessage(message transport.Message) error {
 
 	if err != nil {
 		d.Logger.Error(fmt.Sprintf("Failed to find target component for message: %s", err.Error()), false, shared.MainComponentName)
-		err := d.Listener.SendResponse(message.Requester, []byte(shared.NoMatchFoundResponsePayload))
+		err := d.Listener.SendResponse(*message.Requester, []byte(shared.NoMatchFoundResponsePayload), *message.UniqueID)
 
 		if err != nil {
 			d.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)

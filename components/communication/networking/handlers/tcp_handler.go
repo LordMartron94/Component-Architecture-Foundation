@@ -43,8 +43,8 @@ func (tcp *TCPHandler) StartListenLoop() error {
 	return tcp.ConnectionHandler.StartListenLoop()
 }
 
-func (tcp *TCPHandler) SendResponse(id transport.ComponentID, payload []byte) error {
-	return tcp.CommunicationHandler.SendResponse(id, payload)
+func (tcp *TCPHandler) SendResponse(id transport.ComponentID, payload []byte, targetUUID string) error {
+	return tcp.CommunicationHandler.SendResponse(id, payload, targetUUID)
 }
 
 func (tcp *TCPHandler) SendRequest(id transport.ComponentID, payload transport.MessagePayload) error {

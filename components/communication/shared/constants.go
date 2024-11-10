@@ -21,6 +21,7 @@ const ShutdownRequestPayload = `{
 
 // DefaultSuccessResponsePayload The Default success response for the server.
 // Don't forget to set the target component and time sent.
+// As well as the uuid.
 const DefaultSuccessResponsePayload = `{
 		"action": "response",
 		"args": [
