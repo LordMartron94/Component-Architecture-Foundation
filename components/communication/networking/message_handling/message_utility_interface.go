@@ -7,5 +7,5 @@ type MessageUtilityInterface interface {
 	// Returns error if there are missing values for pointers.
 	//But still returns the decoded message.
 	DecodeMessage(data []byte) (transport.Message, error)
-	CreateMessage(payload transport.MessagePayload, target transport.ComponentID) transport.Message
+	CreateMessage(payload transport.MessagePayload) transport.Message
 }

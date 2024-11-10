@@ -47,10 +47,10 @@ func (tcp *TCPHandler) StartListenLoop() error {
 	return tcp.ConnectionHandler.StartListenLoop()
 }
 
-func (tcp *TCPHandler) SendResponse(id transport.ComponentID, payload []byte, targetUUID string) error {
+func (tcp *TCPHandler) SendResponse(id string, payload []byte, targetUUID string) error {
 	return tcp.CommunicationHandler.SendResponse(id, payload, targetUUID)
 }
 
-func (tcp *TCPHandler) SendRequest(id transport.ComponentID, payload transport.MessagePayload) error {
+func (tcp *TCPHandler) SendRequest(id string, payload transport.MessagePayload) error {
 	return tcp.CommunicationHandler.SendRequest(id, payload)
 }

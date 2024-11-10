@@ -1,44 +1,57 @@
 package transport
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/component-architecture-foundation/logging"
+	"github.com/component-architecture-foundation/shared"
 )
 
 type Message struct {
-	Requester *ComponentID    `json:"requester"`
-	Target    *ComponentID    `json:"target"`
-	TimeSent  *time.Time      `json:"time_sent"`
-	Payload   *MessagePayload `json:"payload"`
-	UniqueID  *string         `json:"unique_id"`
+	RequesterID *string         `json:"requester_id"`
+	TimeSent    *time.Time      `json:"time_sent"`
+	Payload     *MessagePayload `json:"payload"`
+	UniqueID    *string         `json:"unique_id"`
 }
 
-func (m *Message) GetValues() map[string]interface{} {
-	values := make(map[string]interface{})
-
-	values["requester"] = m.Requester
-	values["target"] = m.Target
-	values["time_sent"] = m.TimeSent
-	values["payload"] = m.Payload
-	values["unique_id"] = m.UniqueID
-
-	return values
-}
-
-func NewMessage(requester ComponentID, target ComponentID, payload MessagePayload) *Message {
+func NewMessage(requester ComponentID, payload MessagePayload) *Message {
 	currentTime := time.Now()
 
 	return &Message{
-		Requester: &requester,
-		Target:    &target,
-		TimeSent:  &currentTime,
-		Payload:   &payload,
-		UniqueID:  GenerateUniqueID(),
+		RequesterID: &requester.ComponentUniqueID,
+		TimeSent:    &currentTime,
+		Payload:     &payload,
+		UniqueID:    GenerateUniqueID(),
 	}
 }
 
 func GenerateUniqueID() *string {
 	generatedUUID := uuid.New().String()
 	return &generatedUUID
+}
+
+func (m *Message) GetComponentIDFromRegistrationMessage(logger *logging.HoornLogger) (*ComponentID, error) {
+	if len(m.Payload.Args) < 3 {
+		logger.Error("Message does not contain enough arguments to create ComponentID", false, shared.NetworkingComponentName)
+		return nil, fmt.Errorf("message does not contain enough arguments to create ComponentID")
+	}
+
+	capabilities, err := NewCapabilitiesFromJSON(m.Payload.Args[2].Value)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error parsing capabilities from JSON: %s", err.Error()), false, shared.NetworkingComponentName)
+		return nil, err
+	}
+
+	cID := ComponentID{
+		Title:             m.Payload.Args[0].Value,
+		Version:           m.Payload.Args[1].Value,
+		Capabilities:      capabilities,
+		ComponentUniqueID: *m.RequesterID,
+	}
+
+	return &cID, nil
 }

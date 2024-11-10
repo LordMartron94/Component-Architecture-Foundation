@@ -6,7 +6,7 @@ import (
 )
 
 type RequesterInterface interface {
-	SendResponse(id transport.ComponentID, response []byte, targetUUID string) error
+	SendResponse(id string, response []byte, targetUUID string) error
 }
 
 type SpecialActionPerformer struct {

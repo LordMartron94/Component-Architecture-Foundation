@@ -58,7 +58,11 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Logger:             logger,
 		RequesterInterface: listener,
 	}
-	componentRegistrar := component_registration.ComponentRegistrar{Logger: logger, SpecialActionPerformer: &specialActionPerformer}
+	componentRegistrar := component_registration.ComponentRegistrar{
+		Logger:                 logger,
+		SpecialActionPerformer: &specialActionPerformer,
+		Listener:               listener,
+	}
 
 	shutdownComponents := lifecycle_managing.ShutdownComponents{
 		ComponentRegistrar: &componentRegistrar,
@@ -101,10 +105,12 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Logger:                       logger,
 		Listener:                     listener,
 		GetTargetComponentForMessage: router.getTargetComponentForMessage,
+		GetComponentByID:             componentRegistrar.GetComponentByID,
 	})
 	router.RegisterMessageHandler("unregister", &processors.UnregisterMessageHandler{
 		Logger:             logger,
 		ComponentRegistrar: &componentRegistrar,
+		GetComponentByID:   componentRegistrar.GetComponentByID,
 	})
 
 	return router
@@ -136,7 +142,14 @@ func (r *Router) handleMessages() {
 	for {
 		select {
 		case msg := <-r.MessageChannel:
-			r.Logger.Debug(fmt.Sprintf("Gotten message from '%s@%s' with payload '%s'", msg.Requester.Title, msg.Requester.Version, msg.Payload), false, shared.MainComponentName)
+			componentID, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
+
+			if err != nil {
+				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
+			} else {
+				r.Logger.Debug(fmt.Sprintf("Gotten message from '%s@%s' with payload '%s'", componentID.Title, componentID.Version, msg.Payload), false, shared.MainComponentName)
+			}
+
 			r.processMessage(msg)
 		default:
 			time.Sleep(time.Millisecond * 10)
@@ -145,22 +158,36 @@ func (r *Router) handleMessages() {
 }
 
 func (r *Router) processMessage(message transport.Message) {
+	componentID, err1 := r.componentRegistrar.GetComponentByID(*message.RequesterID)
+
+	if err1 != nil {
+		r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err1.Error()), false, shared.MainComponentName)
+	}
+
 	for action, processor := range r.messageHandlers {
 		if action == message.Payload.Action {
 			err := processor.ProcessMessage(message)
 			if err != nil {
-				r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, message.Requester.Title, err.Error()), false, shared.MainComponentName)
+				if err1 != nil {
+					r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.RequesterID, err.Error()), false, shared.MainComponentName)
+				} else {
+					r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, componentID.Title, err.Error()), false, shared.MainComponentName)
+				}
 				return
 			}
 			return
 		}
 	}
 
-	r.Logger.Debug(fmt.Sprintf("Received message '%s' with normal action. Resorting to default processor", message.Requester.Title), false, shared.MainComponentName)
+	r.Logger.Debug(fmt.Sprintf("Received message '%s' with normal action. Resorting to default processor", componentID.Title), false, shared.MainComponentName)
 	defaultProcessor := r.messageHandlers["__default__"]
 	err := defaultProcessor.ProcessMessage(message)
 	if err != nil {
-		r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, message.Requester.Title, err.Error()), false, shared.MainComponentName)
+		if err1 != nil {
+			r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.RequesterID, err.Error()), false, shared.MainComponentName)
+		} else {
+			r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, componentID.Title, err.Error()), false, shared.MainComponentName)
+		}
 	}
 }
 

@@ -48,9 +48,9 @@ func (p *PeerHandler) RemovePeer(addr net.Addr) {
 	}
 }
 
-func (p *PeerHandler) FindPeerByComponentID(id transport.ComponentID) (Peer, error) {
+func (p *PeerHandler) FindPeerByComponentID(id string) (Peer, error) {
 	for _, peer := range p.activeConnections {
-		if peer.AssociatedComponent.Equal(id) {
+		if peer.AssociatedComponent.ComponentUniqueID == id {
 			return peer, nil
 		}
 	}

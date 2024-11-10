@@ -18,7 +18,7 @@ type CommunicationHandler struct {
 	MessageCoder   coding.MessageCoderInterface
 }
 
-func (c *CommunicationHandler) SendResponse(id transport.ComponentID, payload []byte, targetUUID string) error {
+func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUID string) error {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
 		c.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
@@ -36,18 +36,18 @@ func (c *CommunicationHandler) SendResponse(id transport.ComponentID, payload []
 		return err
 	}
 
-	createdMessage := c.MessageUtility.CreateMessage(createdPayload, id)
+	createdMessage := c.MessageUtility.CreateMessage(createdPayload)
 	return c.sendMessage(associatedPeer, createdMessage)
 }
 
-func (c *CommunicationHandler) SendRequest(id transport.ComponentID, payload transport.MessagePayload) error {
+func (c *CommunicationHandler) SendRequest(id string, payload transport.MessagePayload) error {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
 		c.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
-	createdMessage := c.MessageUtility.CreateMessage(payload, id)
+	createdMessage := c.MessageUtility.CreateMessage(payload)
 	return c.sendMessage(associatedPeer, createdMessage)
 }
 

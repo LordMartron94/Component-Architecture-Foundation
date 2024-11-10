@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/coding"
@@ -120,7 +121,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	decodedData, err := d.MessageUtility.DecodeMessage(data)
 
 	if err != nil {
-		if decodedData.Requester == nil {
+		if decodedData.RequesterID == nil {
 			d.Logger.Warn(fmt.Sprintf("Cannot send response because requester id is missing: %s", err.Error()), false, shared.NetworkingComponentName)
 			conn.Close()
 			return
@@ -128,8 +129,10 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 		var missingValueError coding.MissingValueError
 		if errors.As(err, &missingValueError) {
-			peer := d.PeerHandler.AddPeer(conn, *decodedData.Requester) // Necessary to add peer before sending response
-			d.sendResponse(*decodedData.Requester, []byte(shared.InvalidRequestResponsePayload), "__not a uuid because uuid field can be missing__")
+			componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
+
+			peer := d.PeerHandler.AddPeer(conn, *componentID) // Necessary to add peer before sending response
+			d.sendResponse(*decodedData.RequesterID, []byte(shared.InvalidRequestResponsePayload), "__not a uuid because uuid field can be missing__")
 			d.PeerHandler.RemovePeer(peer.Address)
 		}
 		conn.Close()
@@ -140,7 +143,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 	if actionRequested != "register" {
 		d.Logger.Error(fmt.Sprintf("Invalid first action requested: '%s'", actionRequested), false, shared.NetworkingComponentName)
-		d.sendResponse(*decodedData.Requester, []byte(shared.InvalidFirstActionPayload), *decodedData.UniqueID)
+		d.sendResponse(*decodedData.RequesterID, []byte(shared.InvalidFirstActionPayload), *decodedData.UniqueID)
 
 		conn.Close()
 		return
@@ -149,17 +152,45 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
 	d.MessageChannel <- decodedData
 
-	peer := d.PeerHandler.AddPeer(conn, *decodedData.Requester)
+	componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
+
+	if componentID == nil {
+		d.Logger.Error("Failed to get component ID from message", false, shared.NetworkingComponentName)
+		d.sendRawResponse([]byte(shared.InvalidRequestResponsePayload), conn, *decodedData.UniqueID)
+		time.Sleep(time.Second)
+		conn.Close()
+		return
+	}
+
+	peer := d.PeerHandler.AddPeer(conn, *componentID)
 
 	d.Logger.Info(fmt.Sprintf("New connection from '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
 
 	go d.DataListener.ListenForData(peer, scanner)
 }
 
-func (d *DefaultConnectionHandler) sendResponse(component transport.ComponentID, payload []byte, targetUUID string) {
+func (d *DefaultConnectionHandler) sendResponse(component string, payload []byte, targetUUID string) {
 	err := d.CommunicationHandler.SendResponse(component, payload, targetUUID)
 
 	if err != nil {
 		d.Logger.Warn(fmt.Sprintf("Failed to send response: '%s'", err.Error()), false, shared.NetworkingComponentName)
 	}
+}
+
+func (d *DefaultConnectionHandler) sendRawResponse(payload []byte, connection net.Conn, messageUUID string) {
+	parsedPayload, err := transport.MessagePayloadFromBytes(payload)
+
+	if err != nil {
+		d.Logger.Error(fmt.Sprintf("Failed to create message payload: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		return
+	}
+
+	message := d.MessageUtility.CreateMessage(parsedPayload)
+	message.Payload.Args = append(message.Payload.Args, transport.Argument{
+		Type:  "string",
+		Value: messageUUID,
+	})
+	encodedMessage, err := d.MessageCoder.Encode(message)
+	encodedMessage = append(encodedMessage, []byte(shared.EndOfMessageToken)...)
+	connection.Write(encodedMessage)
 }
