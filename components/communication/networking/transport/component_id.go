@@ -1,9 +1,10 @@
 package transport
 
 type ComponentID struct {
-	Title        string       `json:"title"`
-	Version      string       `json:"version"`
-	Capabilities []Capability `json:"capabilities"`
+	Title             string       `json:"title"`
+	Version           string       `json:"version"`
+	Capabilities      []Capability `json:"capabilities"`
+	ComponentUniqueID string       `json:"component_unique_id"`
 }
 
 func (c *ComponentID) Equal(other ComponentID) bool {

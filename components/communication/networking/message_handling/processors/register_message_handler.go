@@ -12,18 +12,25 @@ import (
 type RegisterMessageHandler struct {
 	Logger            *logging.HoornLogger
 	Listener          message_handling.ListenerInterface
-	RegisterComponent func(message transport.Message)
+	RegisterComponent func(message transport.Message) transport.ComponentID
 }
 
 func (r *RegisterMessageHandler) ProcessMessage(message transport.Message) error {
-	r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", message.Requester.Title, message.Requester.Version), false, shared.MainComponentName)
-	capabilities := r.convertCapabilitiesToString(message.Requester.Capabilities)
-	r.Logger.Debug(fmt.Sprintf("Capabilities: %s", capabilities), false, shared.MainComponentName)
-	r.RegisterComponent(message)
+	componentID, err := message.GetComponentIDFromRegistrationMessage(r.Logger)
 
-	err := r.Listener.SendResponse(*message.Requester, []byte(shared.RegisterSuccessResponsePayload), *message.UniqueID)
 	if err != nil {
-		r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", message.Requester.Title, message.Requester.Version, err.Error()), false, shared.MainComponentName)
+		r.Logger.Error(fmt.Sprintf("Failed to parse component ID from message: %s", err.Error()), false, shared.MainComponentName)
+		return err
+	}
+
+	r.Logger.Info(fmt.Sprintf("Received registration request from '%s@%s'", componentID.Title, componentID.Version), false, shared.MainComponentName)
+	capabilities := r.convertCapabilitiesToString(componentID.Capabilities)
+	r.Logger.Debug(fmt.Sprintf("Capabilities: %s", capabilities), false, shared.MainComponentName)
+	component := r.RegisterComponent(message)
+
+	err = r.Listener.SendResponse(*message.RequesterID, []byte(shared.RegisterSuccessResponsePayload), *message.UniqueID)
+	if err != nil {
+		r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", component.Title, component.Version, err.Error()), false, shared.MainComponentName)
 		return err
 	}
 

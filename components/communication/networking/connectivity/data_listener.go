@@ -21,7 +21,7 @@ type DataListener struct {
 	MessageUtility message_handling.MessageUtilityInterface
 	MessageChannel chan transport.Message
 
-	sendResponse func(component transport.ComponentID, payload []byte, targetUUID string)
+	sendResponse func(component string, payload []byte, targetUUID string)
 	shutdownChan chan struct{}
 }
 
@@ -63,11 +63,11 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 
 func (d *DataListener) sendHandleResponse(decodedMessage transport.Message, decodeError error) {
 	if decodeError != nil {
-		d.sendResponse(*decodedMessage.Requester, []byte(shared.InvalidRequestResponsePayload), *decodedMessage.UniqueID)
+		d.sendResponse(*decodedMessage.RequesterID, []byte(shared.InvalidRequestResponsePayload), *decodedMessage.UniqueID)
 		return
 	}
 
-	d.sendResponse(*decodedMessage.Requester, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
+	d.sendResponse(*decodedMessage.RequesterID, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
 
 	return
 }

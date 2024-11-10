@@ -12,6 +12,7 @@ const EndOfMessageToken = "<eom>"
 
 const ServerName = "Middleman"
 const ServerVersion = "1.0.0"
+const ServerUUID = "44ea3720-ac2c-4e11-b5e5-edac29d48e4f"
 
 // ---- Default Server Messages ----
 const ShutdownRequestPayload = `{

@@ -63,7 +63,7 @@ func (j *JsonMessageCoder) checkForMissingValues(message transport.Message) bool
 		field := v.Field(i)
 		key := v.Type().Field(i).Name
 
-		j.Logger.Debug(fmt.Sprintf("Value for key '%s': %v/", key, field.Interface()), false, shared.NetworkingComponentName)
+		j.Logger.Debug(fmt.Sprintf("Value for key '%s': %v", key, field.Interface()), false, shared.NetworkingComponentName)
 
 		// Check for nil pointers and zero values
 		if field.Kind() == reflect.Ptr && field.IsNil() {
