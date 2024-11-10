@@ -5,6 +5,8 @@
 - [Architecture Overview](#architecture-overview)
   - [Example Sequences](#example-sequences)
 - [JSON Scheme](#json-scheme)
+  - [Registration](#registration)
+  - [Example Request](#example-request)
 - [Changelog](#changelog)
 
 ## Introduction
@@ -52,40 +54,123 @@ ____________
 
 ## JSON Scheme
 Each message must have the following fields present or they will be invalid:
-- `requester` (component ID): The component that sends the request.
-- `target` (component ID): The component that receives the request, usually this is the server.
+- `requester_id` (string, UUIDv4): A unique ID for the component.
 - `time_sent` (string, RFC3339Nano): The timestamp when the request was sent.
 - `payload` (message payload): The data to be sent with the request.
-- `request_id` (string): A unique identifier for the request. (GUIDv4 recommended)
+- `request_id` (string, UUIDv4): A unique identifier for the request. (GUIDv4 recommended)
 
-A component has its own structure for being valid; an example will suffice:
+
+### Registration
+
+It is crucial that every component registers itself first. This can be done in the following way:
 ```json
- "requester": {
-    "title": "Common",
-    "version": "0.1.14",
-    "capabilities": [
+{
+  "requester_id": "ea1973db-31e7-4fe4-bd57-e217f246f6a1",
+  "payload": {
+    "action": "register",
+    "args": [
       {
-        "name": "log_debug",
-        "signature": {
-          "num_of_args": 4,
-          "type_of_args": [
-            "string",
-            "bool",
-            "string",
-            "string"
-          ]
-        }
+        "type": "string",
+        "value": "Common"
+      },
+      {
+        "type": "string",
+        "value": "0.1.14"
       }
-  ]
+    ]
+  }
 }
 ```
+_Example from my Python Common library for logging_
 
-That is a basic example of a JSON scheme for a component ID. It contains a title and version and a list of capabilities.
-Each capability has a name (the action/method) and a signature.
+Note that the actual capabilities for the registration payload are generated programmatically because it needs to be formatted as a proper json string:
+```python
+with open(Path(__file__).parent.joinpath('component_signature.json'), 'r') as f:
+    json_string = json.loads(f.read())
+    json_string = json.dumps(json_string)
+    message["payload"]["args"].append({"type": "list", "value": json_string})
+```
+
+```json
+[
+  {
+    "name": "log_debug",
+    "signature": {
+      "num_of_args": 4,
+      "type_of_args": [
+        "string",
+        "bool",
+        "string",
+        "string"
+      ]
+    }
+  },
+  {
+    "name": "log_info",
+    "signature": {
+      "num_of_args": 4,
+      "type_of_args": [
+        "string",
+        "bool",
+        "string",
+        "string"
+      ]
+    }
+  },
+  {
+    "name": "log_warn",
+    "signature": {
+      "num_of_args": 4,
+      "type_of_args": [
+        "string",
+        "bool",
+        "string",
+        "string"
+      ]
+    }
+  },
+  {
+    "name": "log_error",
+    "signature": {
+      "num_of_args": 4,
+      "type_of_args": [
+        "string",
+        "bool",
+        "string",
+        "string"
+      ]
+    }
+  },
+  {
+    "name": "log_critical",
+    "signature": {
+      "num_of_args": 4,
+      "type_of_args": [
+        "string",
+        "bool",
+        "string",
+        "string"
+      ]
+    }
+  },
+  {
+    "name": "shutdown",
+    "signature": {
+      "num_of_args": 0,
+      "type_of_args": []
+    }
+  }
+]
+```
+_component_registration.json_
+
+As you can see, each capability has a name (the action/method) and a signature.
 The signature consists of a number of arguments and a list of their types.
 This way, when a request is sent,
 the server automatically finds methods that fit the request (action name must be equal and the signature too).
 If a suitable target component isn't found, the server sends an error response back to the client.
+
+### Example Request
 
 An example for a `log_debug` request sent from one of my Windows UI components:
 ```json
@@ -124,7 +209,7 @@ An example for a `log_debug` request sent from one of my Windows UI components:
   }
 }
 ```
-_Note, this was before I added the UUIDs_
+_Note, this was before I added the UUIDs and changed the requester format._
 
 ## Changelog
 - **10 November 2024:** Version 0.1.0 released
