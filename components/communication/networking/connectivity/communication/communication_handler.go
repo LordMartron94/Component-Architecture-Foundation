@@ -21,7 +21,7 @@ type CommunicationHandler struct {
 func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUID string) error {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
-		c.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		c.Logger.Warn(fmt.Sprintf("Error finding peer by component ID: '%s' | Can't send Response.", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
@@ -32,23 +32,23 @@ func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUI
 	})
 
 	if err != nil {
-		c.Logger.Error(fmt.Sprintf("Error creating message payload: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		c.Logger.Warn(fmt.Sprintf("Error creating message payload: '%s'", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
 	createdMessage := c.MessageUtility.CreateMessage(createdPayload)
-	return c.sendMessage(associatedPeer, createdMessage)
+	return c.sendMessage(*associatedPeer, createdMessage)
 }
 
 func (c *CommunicationHandler) SendRequest(id string, payload transport.MessagePayload) error {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
-		c.Logger.Error(fmt.Sprintf("Error finding peer by component ID: '%s'", err.Error()), false, shared.NetworkingComponentName)
+		c.Logger.Warn(fmt.Sprintf("Error finding peer by component ID: '%s' | Can't send Request.", err.Error()), false, shared.NetworkingComponentName)
 		return err
 	}
 
 	createdMessage := c.MessageUtility.CreateMessage(payload)
-	return c.sendMessage(associatedPeer, createdMessage)
+	return c.sendMessage(*associatedPeer, createdMessage)
 }
 
 func (c *CommunicationHandler) sendMessage(target peer.Peer, message transport.Message) error {

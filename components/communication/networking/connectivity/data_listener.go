@@ -27,6 +27,9 @@ type DataListener struct {
 }
 
 func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) {
+	d.Logger.Debug(fmt.Sprintf("Started listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
+	defer d.Logger.Debug(fmt.Sprintf("Stopped listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
+
 	dataChan := make(chan []byte, 1) // Buffered channel
 	stopScanning := make(chan struct{})
 	var bufferMutex sync.Mutex // Mutex for buffer access
@@ -36,32 +39,38 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 			select {
 			case <-stopScanning:
 				break
-			}
-
-			scanned, err := scanner.Scan(stopScanning)
-			if err != nil {
-				if d.handleScanError(err, peer) {
-					close(stopScanning)
+			default:
+				scanned, err := scanner.Scan(stopScanning)
+				if err != nil {
+					if d.handleScanError(err, peer) {
+						close(stopScanning)
+					}
+					continue
 				}
-				continue
-			}
 
-			if !scanned {
-				continue
-			}
+				if !scanned {
+					d.Logger.Debug(fmt.Sprintf("No data received from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
+					continue
+				}
 
-			bufferMutex.Lock()
-			dataChan <- scanner.Bytes()
-			bufferMutex.Unlock()
+				d.Logger.Debug(fmt.Sprintf("Received data from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
+
+				bufferMutex.Lock()
+				dataChan <- scanner.Bytes()
+				bufferMutex.Unlock()
+			}
 		}
 	}()
 
 	for {
 		select {
 		case <-d.shutdownChan:
+			d.Logger.Debug("Stopped listening for data because of shutdown signal.", false, shared.NetworkingComponentName)
 			close(stopScanning)
 			return
 		case data := <-dataChan:
+			d.Logger.Debug(fmt.Sprintf("Received data from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
+
 			decodedMessage, err := d.MessageUtility.DecodeMessage(data)
 			d.sendHandleResponse(decodedMessage, err)
 			d.MessageChannel <- decodedMessage

@@ -14,6 +14,7 @@ type Peer struct {
 	Connection          net.Conn
 	Outbound            bool
 	AssociatedComponent transport.ComponentID
+	Active              bool
 }
 
 func (p *Peer) CheckConnection() bool {

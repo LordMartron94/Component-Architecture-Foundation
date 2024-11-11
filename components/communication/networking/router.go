@@ -112,6 +112,10 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		ComponentRegistrar: &componentRegistrar,
 		GetComponentByID:   componentRegistrar.GetComponentByID,
 	})
+	router.RegisterMessageHandler("keep_alive", &processors.KeepAliveMessageHandler{
+		Logger:      logger,
+		PeerHandler: peerHandler,
+	})
 
 	return router
 }

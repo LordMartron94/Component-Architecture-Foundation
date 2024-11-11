@@ -155,7 +155,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
 
 	if componentID == nil {
-		d.Logger.Error("Failed to get component ID from message", false, shared.NetworkingComponentName)
+		d.Logger.Error("Failed to get component ID from message during registration; closing connection", false, shared.NetworkingComponentName)
 		d.sendRawResponse([]byte(shared.InvalidRequestResponsePayload), conn, *decodedData.UniqueID)
 		time.Sleep(time.Second)
 		conn.Close()
@@ -166,7 +166,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 	d.Logger.Info(fmt.Sprintf("New connection from '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
 
-	go d.DataListener.ListenForData(peer, scanner)
+	go d.DataListener.ListenForData(*peer, scanner)
 }
 
 func (d *DefaultConnectionHandler) sendResponse(component string, payload []byte, targetUUID string) {

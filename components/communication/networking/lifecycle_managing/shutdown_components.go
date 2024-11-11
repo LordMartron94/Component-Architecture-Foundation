@@ -31,7 +31,7 @@ func (s ShutdownComponents) Shutdown() error {
 
 		err = s.Listener.SendRequest(component.ComponentUniqueID, payload)
 		if err != nil {
-			s.Logger.Warn("Unable to shut down listener", false, shared.MainComponentName)
+			s.Logger.Warn(fmt.Sprintf("Unable to shut down listener because: '%s'", err), false, shared.MainComponentName)
 		}
 	}
 

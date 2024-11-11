@@ -6,6 +6,7 @@
   - [Example Sequences](#example-sequences)
 - [JSON Scheme](#json-scheme)
   - [Registration](#registration)
+  - [Keep Alive](#keep-alive)
   - [Example Request](#example-request)
 - [Changelog](#changelog)
 
@@ -169,6 +170,23 @@ The signature consists of a number of arguments and a list of their types.
 This way, when a request is sent,
 the server automatically finds methods that fit the request (action name must be equal and the signature too).
 If a suitable target component isn't found, the server sends an error response back to the client.
+
+### Keep Alive
+
+Components should send a 'KeepAlive' request to the server every 5 seconds to inform the server that the connection is still alive.
+This is necessary to prevent the server from timing out the connection after a period of inactivity.
+Here is an example of a 'KeepAlive' request:
+```json
+{
+  "requester_id": "5b4b25d1-9538-40ce-8147-4d712013543e",
+  "time_sent": "2024-11-11T13:35:32.4440646+01:00",
+  "payload": {
+    "action": "keep_alive",
+    "args": null
+  },
+  "unique_id": "93fbce0d-d801-428c-8426-0c2a6c1bb1a6"
+}
+```
 
 ### Example Request
 

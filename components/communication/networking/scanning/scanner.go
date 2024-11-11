@@ -35,8 +35,12 @@ func NewScanner(r io.Reader, delimiter string, logger *logging.HoornLogger) *Sca
 // and false otherwise (either because the end of the input was reached or an error occurred).
 func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 	s.buffer = s.buffer[:0]
+	s.Logger.Debug("Starting to scan for next token", false, shared.ScannerComponentName)
+	defer s.Logger.Debug("Finished scanning for next token", false, shared.ScannerComponentName)
 
 	for {
+		//s.Logger.Debug("Scanning for next token", false, shared.ScannerComponentName)
+
 		// Select statement to handle shutdown signal and check connection status
 		select {
 		case <-shutdownChan:
@@ -57,9 +61,11 @@ func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 						if err == io.EOF {
 							s.eof = true
 							// Return true if there's any remaining data in the buffer
+							s.Logger.Info("Returning remaining data in buffer, end of file", false, shared.ScannerComponentName)
 							return len(s.buffer) > 0, err
 						}
 
+						s.Logger.Warn(fmt.Sprintf("Error reading bytes: '%s", err), false, shared.ScannerComponentName)
 						return false, err
 					}
 
