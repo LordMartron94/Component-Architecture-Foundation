@@ -111,12 +111,12 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 		return
 	}
 
-	d.Logger.Debug("Scanned!", false, shared.NetworkingComponentName)
+	//d.Logger.Debug("Scanned!", false, shared.NetworkingComponentName)
 
 	data := scanner.Bytes()
-	dataString := scanner.Text()
+	//dataString := scanner.Text()
 
-	d.Logger.Debug(fmt.Sprintf("Content: %s", dataString), false, shared.NetworkingComponentName)
+	//d.Logger.Debug(fmt.Sprintf("Content: %s", dataString), false, shared.NetworkingComponentName)
 
 	decodedData, err := d.MessageUtility.DecodeMessage(data)
 
@@ -149,7 +149,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 		return
 	}
 
-	d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
+	//d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
 	d.MessageChannel <- decodedData
 
 	componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)

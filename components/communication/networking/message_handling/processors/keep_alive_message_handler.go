@@ -22,8 +22,6 @@ func (k *KeepAliveMessageHandler) ProcessMessage(message transport.Message) erro
 		return err
 	}
 
-	k.Logger.Info(fmt.Sprintf("Received keep-alive message from component '%s@%s'", associatedPeer.AssociatedComponent.Title, associatedPeer.AssociatedComponent.Version), false, shared.RoutingComponentName)
-
 	k.PeerHandler.KeepAlive(associatedPeer)
 	return nil
 }

@@ -35,8 +35,8 @@ func NewScanner(r io.Reader, delimiter string, logger *logging.HoornLogger) *Sca
 // and false otherwise (either because the end of the input was reached or an error occurred).
 func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 	s.buffer = s.buffer[:0]
-	s.Logger.Debug("Starting to scan for next token", false, shared.ScannerComponentName)
-	defer s.Logger.Debug("Finished scanning for next token", false, shared.ScannerComponentName)
+	//s.Logger.Debug("Starting to scan for next token", false, shared.ScannerComponentName)
+	//defer s.Logger.Debug("Finished scanning for next token", false, shared.ScannerComponentName)
 
 	for {
 		//s.Logger.Debug("Scanning for next token", false, shared.ScannerComponentName)
@@ -84,7 +84,7 @@ func (s *Scanner) Scan(shutdownChan <-chan struct{}) (bool, error) {
 
 // Bytes returns the current token as bytes.
 func (s *Scanner) Bytes() []byte {
-	s.Logger.Debug(fmt.Sprintf("Current bytes: %s", s.buffer), false, shared.ScannerComponentName)
+	//s.Logger.Debug(fmt.Sprintf("Current bytes: %s", s.buffer), false, shared.ScannerComponentName)
 	return append([]byte(nil), s.buffer...) // Create a copy to avoid data races
 }
 

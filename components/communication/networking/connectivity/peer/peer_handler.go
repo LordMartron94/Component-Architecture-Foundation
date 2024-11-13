@@ -89,7 +89,7 @@ func (p *PeerHandler) detectInactiveConnections(keepAliveInterval time.Duration)
 	// Detect dead connections
 	for i, peer := range p.activeConnections {
 		if currentTime.Sub(p.lastAliveMessages[peer.Address.String()]) > keepAliveInterval+(15*time.Second) {
-			p.Logger.Info(fmt.Sprintf("Removing dead connection from peer: %v", peer.Address.String()), false, shared.NetworkingComponentName)
+			p.Logger.Warn(fmt.Sprintf("No successful keep-alive message from peer in required interval; removing dead connection from peer: '%v'", peer.Address.String()), false, shared.NetworkingComponentName)
 
 			p.activeConnections[i].Active = false
 			p.lastRemovedPeerAt[peer.Address.String()] = currentTime
@@ -169,7 +169,12 @@ func (p *PeerHandler) ClosePeerConnections() {
 }
 
 func (p *PeerHandler) KeepAlive(peer *Peer) {
-	p.Logger.Debug(fmt.Sprintf("Gotten keep alive peer connection: %v", peer.Address), false, shared.NetworkingComponentName)
+	currentTime := time.Now()
+	lastSuccessfulAliveTime := p.lastAliveMessages[peer.Address.String()]
+
+	if currentTime.Sub(lastSuccessfulAliveTime) > 5*time.Minute {
+		p.Logger.Debug(fmt.Sprintf("Gotten keep alive peer connection: %v", peer.Address), false, shared.NetworkingComponentName)
+	}
 
 	p.lastAliveMessages[peer.Address.String()] = time.Now()
 }
