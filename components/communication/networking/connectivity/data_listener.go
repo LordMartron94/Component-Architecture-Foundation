@@ -49,11 +49,8 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 				}
 
 				if !scanned {
-					d.Logger.Debug(fmt.Sprintf("No data received from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
 					continue
 				}
-
-				d.Logger.Debug(fmt.Sprintf("Received data from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
 
 				bufferMutex.Lock()
 				dataChan <- scanner.Bytes()
@@ -78,8 +75,6 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 			close(stopScanning)
 			return
 		case data := <-dataChan:
-			d.Logger.Debug(fmt.Sprintf("Received data from peer (from scanner): '%s'", peer.Address), false, shared.NetworkingComponentName)
-
 			decodedMessage, err := d.MessageUtility.DecodeMessage(data)
 			d.sendHandleResponse(decodedMessage, err)
 			d.MessageChannel <- decodedMessage
