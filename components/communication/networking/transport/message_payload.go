@@ -10,6 +10,10 @@ type MessagePayload struct {
 	Args   []Argument `json:"args"`
 }
 
+func (p MessagePayload) ToString() string {
+	return fmt.Sprintf("Action: %s, Args: %v", p.Action, p.Args)
+}
+
 func MessagePayloadFromBytes(payload []byte) (MessagePayload, error) {
 	var mp MessagePayload
 	err := json.Unmarshal(payload, &mp)
@@ -17,4 +21,12 @@ func MessagePayloadFromBytes(payload []byte) (MessagePayload, error) {
 		return MessagePayload{}, fmt.Errorf("something went wrong while unmarshalling payload")
 	}
 	return mp, nil
+}
+
+func MessagePayloadToBytes(mp MessagePayload) ([]byte, error) {
+	marshalled, err := json.Marshal(mp)
+	if err != nil {
+		return nil, fmt.Errorf("something went wrong while marshalling payload")
+	}
+	return marshalled, nil
 }

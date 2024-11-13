@@ -84,11 +84,11 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 
 func (d *DataListener) sendHandleResponse(decodedMessage transport.Message, decodeError error) {
 	if decodeError != nil {
-		d.sendResponse(*decodedMessage.RequesterID, []byte(shared.InvalidRequestResponsePayload), *decodedMessage.UniqueID)
+		d.sendResponse(*decodedMessage.SenderID, []byte(shared.InvalidRequestResponsePayload), *decodedMessage.UniqueID)
 		return
 	}
 
-	d.sendResponse(*decodedMessage.RequesterID, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
+	d.sendResponse(*decodedMessage.SenderID, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
 
 	return
 }

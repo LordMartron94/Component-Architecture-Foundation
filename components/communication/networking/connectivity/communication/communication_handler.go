@@ -18,37 +18,33 @@ type CommunicationHandler struct {
 	MessageCoder   coding.MessageCoderInterface
 }
 
-func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUID string) error {
+func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUID string) (string, error) {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
 		c.Logger.Warn(fmt.Sprintf("Error finding peer by component ID: '%s' | Can't send Response.", err.Error()), false, shared.NetworkingComponentName)
-		return err
+		return "", err
 	}
 
 	createdPayload, err := transport.MessagePayloadFromBytes(payload)
-	createdPayload.Args = append(createdPayload.Args, transport.Argument{
-		Type:  "string",
-		Value: targetUUID,
-	})
-
 	if err != nil {
 		c.Logger.Warn(fmt.Sprintf("Error creating message payload: '%s'", err.Error()), false, shared.NetworkingComponentName)
-		return err
+		return "", err
 	}
 
 	createdMessage := c.MessageUtility.CreateMessage(createdPayload)
-	return c.sendMessage(*associatedPeer, createdMessage)
+	createdMessage.TargetID = targetUUID
+	return *createdMessage.UniqueID, c.sendMessage(*associatedPeer, createdMessage)
 }
 
-func (c *CommunicationHandler) SendRequest(id string, payload transport.MessagePayload) error {
+func (c *CommunicationHandler) SendRequest(id string, payload transport.MessagePayload) (string, error) {
 	associatedPeer, err := c.PeerHandler.FindPeerByComponentID(id)
 	if err != nil {
 		c.Logger.Warn(fmt.Sprintf("Error finding peer by component ID: '%s' | Can't send Request.", err.Error()), false, shared.NetworkingComponentName)
-		return err
+		return "", err
 	}
 
 	createdMessage := c.MessageUtility.CreateMessage(payload)
-	return c.sendMessage(*associatedPeer, createdMessage)
+	return *createdMessage.UniqueID, c.sendMessage(*associatedPeer, createdMessage)
 }
 
 func (c *CommunicationHandler) sendMessage(target peer.Peer, message transport.Message) error {
@@ -58,9 +54,9 @@ func (c *CommunicationHandler) sendMessage(target peer.Peer, message transport.M
 		return err
 	}
 
-	if message.Payload.Action != "response" {
-		c.Logger.Info(fmt.Sprintf("Sending message to peer: '%s'; '%s'", target.Address, message.Payload.Action), false, shared.NetworkingComponentName)
-	}
+	//if message.Payload.Action != "response" {
+	c.Logger.Info(fmt.Sprintf("Sending message to peer: '%s'; '%s'", target.Address, message.Payload.Action), false, shared.NetworkingComponentName)
+	//}
 
 	encodedMessage = append(encodedMessage, []byte(shared.EndOfMessageToken)...)
 

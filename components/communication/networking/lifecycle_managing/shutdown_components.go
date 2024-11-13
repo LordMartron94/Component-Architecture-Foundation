@@ -11,7 +11,7 @@ import (
 )
 
 type RequestInterface interface {
-	SendRequest(id string, payload transport.MessagePayload) error
+	SendRequest(id string, payload transport.MessagePayload) (string, error)
 }
 
 type ShutdownComponents struct {
@@ -29,7 +29,7 @@ func (s ShutdownComponents) Shutdown() error {
 			continue
 		}
 
-		err = s.Listener.SendRequest(component.ComponentUniqueID, payload)
+		_, err = s.Listener.SendRequest(component.ComponentUniqueID, payload)
 		if err != nil {
 			s.Logger.Warn(fmt.Sprintf("Unable to shut down listener because: '%s'", err), false, shared.MainComponentName)
 		}

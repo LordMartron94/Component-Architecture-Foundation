@@ -11,26 +11,32 @@ import (
 )
 
 type Message struct {
-	RequesterID *string         `json:"requester_id"`
-	TimeSent    *time.Time      `json:"time_sent"`
-	Payload     *MessagePayload `json:"payload"`
-	UniqueID    *string         `json:"unique_id"`
+	SenderID *string         `json:"sender_id"`
+	TimeSent *time.Time      `json:"time_sent"`
+	Payload  *MessagePayload `json:"payload"`
+	UniqueID *string         `json:"unique_id"`
+	TargetID string          `json:"target_id"`
 }
 
 func NewMessage(requester ComponentID, payload MessagePayload) *Message {
 	currentTime := time.Now()
 
 	return &Message{
-		RequesterID: &requester.ComponentUniqueID,
-		TimeSent:    &currentTime,
-		Payload:     &payload,
-		UniqueID:    GenerateUniqueID(),
+		SenderID: &requester.ComponentUniqueID,
+		TimeSent: &currentTime,
+		Payload:  &payload,
+		UniqueID: GenerateUniqueID(),
 	}
 }
 
 func GenerateUniqueID() *string {
 	generatedUUID := uuid.New().String()
 	return &generatedUUID
+}
+
+func (m *Message) ToString() string {
+	return fmt.Sprintf("Message{SenderID: %s, TimeSent: %s, Payload: %s, UniqueID: %s, TargetID: %s}",
+		*m.SenderID, m.TimeSent.Format(time.RFC3339), m.Payload.ToString(), *m.UniqueID, m.TargetID)
 }
 
 func (m *Message) GetComponentIDFromRegistrationMessage(logger *logging.HoornLogger) (*ComponentID, error) {
@@ -50,7 +56,7 @@ func (m *Message) GetComponentIDFromRegistrationMessage(logger *logging.HoornLog
 		Title:             m.Payload.Args[0].Value,
 		Version:           m.Payload.Args[1].Value,
 		Capabilities:      capabilities,
-		ComponentUniqueID: *m.RequesterID,
+		ComponentUniqueID: *m.SenderID,
 	}
 
 	return &cID, nil

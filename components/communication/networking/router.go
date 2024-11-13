@@ -146,7 +146,7 @@ func (r *Router) handleMessages() {
 	for {
 		select {
 		case msg := <-r.MessageChannel:
-			componentID, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
+			componentID, err := r.componentRegistrar.GetComponentByID(*msg.SenderID)
 
 			if err != nil {
 				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
@@ -165,7 +165,7 @@ func (r *Router) processMessage(message transport.Message, componentID transport
 			err := processor.ProcessMessage(message)
 			if err != nil {
 				if err1 != nil {
-					r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.RequesterID, err.Error()), false, shared.MainComponentName)
+					r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.SenderID, err.Error()), false, shared.MainComponentName)
 				} else {
 					r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, componentID.Title, err.Error()), false, shared.MainComponentName)
 				}
@@ -180,7 +180,7 @@ func (r *Router) processMessage(message transport.Message, componentID transport
 	err := defaultProcessor.ProcessMessage(message)
 	if err != nil {
 		if err1 != nil {
-			r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.RequesterID, err.Error()), false, shared.MainComponentName)
+			r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, *message.SenderID, err.Error()), false, shared.MainComponentName)
 		} else {
 			r.Logger.Error(fmt.Sprintf("Error processing message '%s' for component '%s': '%s'", message.Payload.Action, componentID.Title, err.Error()), false, shared.MainComponentName)
 		}

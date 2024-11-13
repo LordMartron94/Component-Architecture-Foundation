@@ -121,7 +121,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	decodedData, err := d.MessageUtility.DecodeMessage(data)
 
 	if err != nil {
-		if decodedData.RequesterID == nil {
+		if decodedData.SenderID == nil {
 			d.Logger.Warn(fmt.Sprintf("Cannot send response because requester id is missing: %s", err.Error()), false, shared.NetworkingComponentName)
 			conn.Close()
 			return
@@ -132,7 +132,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 			componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
 
 			peer := d.PeerHandler.AddPeer(conn, *componentID) // Necessary to add peer before sending response
-			d.sendResponse(*decodedData.RequesterID, []byte(shared.InvalidRequestResponsePayload), "__not a uuid because uuid field can be missing__")
+			d.sendResponse(*decodedData.SenderID, []byte(shared.InvalidRequestResponsePayload), "__not a uuid because uuid field can be missing__")
 			d.PeerHandler.RemovePeer(peer.Address)
 		}
 		conn.Close()
@@ -143,7 +143,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 	if actionRequested != "register" {
 		d.Logger.Error(fmt.Sprintf("Invalid first action requested: '%s'", actionRequested), false, shared.NetworkingComponentName)
-		d.sendResponse(*decodedData.RequesterID, []byte(shared.InvalidFirstActionPayload), *decodedData.UniqueID)
+		d.sendResponse(*decodedData.SenderID, []byte(shared.InvalidFirstActionPayload), *decodedData.UniqueID)
 
 		conn.Close()
 		return
@@ -170,7 +170,7 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 }
 
 func (d *DefaultConnectionHandler) sendResponse(component string, payload []byte, targetUUID string) {
-	err := d.CommunicationHandler.SendResponse(component, payload, targetUUID)
+	_, err := d.CommunicationHandler.SendResponse(component, payload, targetUUID)
 
 	if err != nil {
 		d.Logger.Warn(fmt.Sprintf("Failed to send response: '%s'", err.Error()), false, shared.NetworkingComponentName)

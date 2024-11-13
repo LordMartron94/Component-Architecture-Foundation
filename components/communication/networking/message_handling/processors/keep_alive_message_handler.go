@@ -15,10 +15,10 @@ type KeepAliveMessageHandler struct {
 }
 
 func (k *KeepAliveMessageHandler) ProcessMessage(message transport.Message) error {
-	associatedPeer, err := k.PeerHandler.FindPeerByComponentID(*message.RequesterID)
+	associatedPeer, err := k.PeerHandler.FindPeerByComponentID(*message.SenderID)
 
 	if err != nil {
-		k.Logger.Warn(fmt.Sprintf("Failed to find peer by component ID: '%s'", *message.RequesterID), false, shared.RoutingComponentName)
+		k.Logger.Warn(fmt.Sprintf("Failed to find peer by component ID: '%s'", *message.SenderID), false, shared.RoutingComponentName)
 		return err
 	}
 

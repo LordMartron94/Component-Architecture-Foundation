@@ -25,7 +25,7 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transp
 
 	if err != nil {
 		c.Logger.Error(fmt.Sprintf("Error getting component ID from message: %s (on registration)", err.Error()), false, shared.NetworkingComponentName)
-		err := c.Listener.SendResponse(shared.ServerUUID, []byte(shared.InvalidRequestResponsePayload), componentID.ComponentUniqueID)
+		_, err := c.Listener.SendResponse(shared.ServerUUID, []byte(shared.InvalidRequestResponsePayload), componentID.ComponentUniqueID)
 		if err != nil {
 			c.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", componentID.Title, componentID.Version, err.Error()), false, shared.NetworkingComponentName)
 			return transport.ComponentID{}
