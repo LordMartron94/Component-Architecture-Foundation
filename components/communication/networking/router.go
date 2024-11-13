@@ -197,7 +197,7 @@ func (r *Router) processMessage(message transport.Message) {
 
 func (r *Router) info() {
 	for {
-		r.Logger.Info(fmt.Sprintf("Router is running. Components registered: %d | Active peers: %d", len(r.componentRegistrar.GetRegisteredComponents()), r.Listener.GetActiveConnectionsNumber()), false, shared.InfoComponentName)
-		time.Sleep(time.Second * 10)
+		r.Logger.Debug(fmt.Sprintf("Router is running. Components registered: %d | Active peers: %d", len(r.componentRegistrar.GetRegisteredComponents()), r.Listener.GetActiveConnectionsNumber()), false, shared.InfoComponentName)
+		time.Sleep(time.Minute * 10)
 	}
 }
