@@ -173,7 +173,7 @@ If a suitable target component isn't found, the server sends an error response b
 
 ### Keep Alive
 
-Components should send a 'KeepAlive' request to the server every 5 seconds to inform the server that the connection is still alive.
+Components should send a 'KeepAlive' request to the server every 30 seconds to inform the server that the connection is still alive.
 This is necessary to prevent the server from timing out the connection after a period of inactivity.
 Here is an example of a 'KeepAlive' request:
 ```json

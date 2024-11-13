@@ -30,7 +30,7 @@ func NewPeerHandler(logger *logging.HoornLogger) *PeerHandler {
 		mu:                sync.Mutex{},
 	}
 
-	go peerHandler.ClassifyConnections(5 * time.Second)
+	go peerHandler.ClassifyConnections(30 * time.Second)
 
 	return peerHandler
 }
@@ -88,7 +88,7 @@ func (p *PeerHandler) detectInactiveConnections(keepAliveInterval time.Duration)
 
 	// Detect dead connections
 	for i, peer := range p.activeConnections {
-		if currentTime.Sub(p.lastAliveMessages[peer.Address.String()]) > keepAliveInterval {
+		if currentTime.Sub(p.lastAliveMessages[peer.Address.String()]) > keepAliveInterval+(15*time.Second) {
 			p.Logger.Info(fmt.Sprintf("Removing dead connection from peer: %v", peer.Address.String()), false, shared.NetworkingComponentName)
 
 			p.activeConnections[i].Active = false
