@@ -112,6 +112,8 @@ func (p *PeerHandler) AddPeer(conn net.Conn, component transport.ComponentID) *P
 	p.activeConnections = append(p.activeConnections, peer)
 	p.allPeers = append(p.allPeers, peer)
 	p.lastAliveMessages[peer.Address.String()] = time.Now()
+
+	p.Logger.Info(fmt.Sprintf("Router is running. Active peers: %d", p.GetActiveConnectionsNumber()), false, shared.NetworkingComponentName)
 	return peer
 }
 
@@ -135,6 +137,8 @@ func (p *PeerHandler) RemovePeer(addr net.Addr) {
 			break
 		}
 	}
+
+	p.Logger.Info(fmt.Sprintf("Router is running. Active peers: %d", p.GetActiveConnectionsNumber()), false, shared.NetworkingComponentName)
 }
 
 func (p *PeerHandler) FindPeerByComponentID(id string) (*Peer, error) {

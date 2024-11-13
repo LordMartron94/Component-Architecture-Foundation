@@ -27,19 +27,21 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transp
 		c.Logger.Error(fmt.Sprintf("Error getting component ID from message: %s (on registration)", err.Error()), false, shared.NetworkingComponentName)
 		err := c.Listener.SendResponse(shared.ServerUUID, []byte(shared.InvalidRequestResponsePayload), componentID.ComponentUniqueID)
 		if err != nil {
-			c.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", componentID.Title, componentID.Version, err.Error()), false, shared.MainComponentName)
+			c.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", componentID.Title, componentID.Version, err.Error()), false, shared.NetworkingComponentName)
 			return transport.ComponentID{}
 		}
 		return transport.ComponentID{}
 	}
 
 	if containsComponentID(c.registeredComponents, *componentID) {
-		c.Logger.Info(fmt.Sprintf("Component %s is already registered.", componentID.Title), false, shared.MainComponentName)
+		c.Logger.Info(fmt.Sprintf("Component %s is already registered.", componentID.Title), false, shared.NetworkingComponentName)
 		return *componentID
 	}
 
 	c.SpecialActionPerformer.PerformAnySpecialActions(*componentID)
 	c.registeredComponents = append(c.registeredComponents, *componentID)
+
+	c.Logger.Info(fmt.Sprintf("Router is running. Components Registered: %d", len(c.GetRegisteredComponents())), false, shared.NetworkingComponentName)
 
 	return *componentID
 }
@@ -47,11 +49,13 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transp
 func (c *ComponentRegistrar) RemoveRegisteredComponent(id string) {
 	for i, component := range c.registeredComponents {
 		if component.ComponentUniqueID == id {
-			c.Logger.Debug(fmt.Sprintf("Component %s is being unregistered.", component.Title), false, shared.MainComponentName)
+			c.Logger.Debug(fmt.Sprintf("Component %s is being unregistered.", component.Title), false, shared.NetworkingComponentName)
 			c.registeredComponents = append(c.registeredComponents[:i], c.registeredComponents[i+1:]...)
 			break
 		}
 	}
+
+	c.Logger.Info(fmt.Sprintf("Router is running. Components Registered: %d", len(c.GetRegisteredComponents())), false, shared.NetworkingComponentName)
 }
 
 // GetRegisteredComponents returns a copy of the current registered components.
