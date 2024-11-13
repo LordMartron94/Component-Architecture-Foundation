@@ -30,7 +30,7 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 	d.Logger.Debug(fmt.Sprintf("Started listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 	defer d.Logger.Debug(fmt.Sprintf("Stopped listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 
-	dataChan := make(chan []byte, 1) // Buffered channel
+	dataChan := make(chan []byte, 3) // Buffered channel
 	stopScanning := make(chan struct{})
 	var bufferMutex sync.Mutex // Mutex for buffer access
 

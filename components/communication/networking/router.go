@@ -33,7 +33,7 @@ type Router struct {
 }
 
 func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
-	msgChan := make(chan transport.Message)
+	msgChan := make(chan transport.Message, 15)
 	shutdownChan := make(chan struct{})
 
 	server := transport.ComponentID{
@@ -152,9 +152,7 @@ func (r *Router) handleMessages() {
 				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
 			}
 
-			r.processMessage(msg, componentID, err)
-		default:
-			time.Sleep(time.Millisecond * 10)
+			go r.processMessage(msg, componentID, err)
 		}
 	}
 }
