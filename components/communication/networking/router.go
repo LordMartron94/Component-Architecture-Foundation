@@ -146,26 +146,20 @@ func (r *Router) handleMessages() {
 	for {
 		select {
 		case msg := <-r.MessageChannel:
-			_, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
+			componentID, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
 
 			if err != nil {
 				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
 			}
 
-			r.processMessage(msg)
+			r.processMessage(msg, componentID, err)
 		default:
 			time.Sleep(time.Millisecond * 10)
 		}
 	}
 }
 
-func (r *Router) processMessage(message transport.Message) {
-	componentID, err1 := r.componentRegistrar.GetComponentByID(*message.RequesterID)
-
-	if err1 != nil {
-		r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err1.Error()), false, shared.MainComponentName)
-	}
-
+func (r *Router) processMessage(message transport.Message, componentID transport.ComponentID, err1 error) {
 	for action, processor := range r.messageHandlers {
 		if action == message.Payload.Action {
 			err := processor.ProcessMessage(message)
@@ -181,7 +175,7 @@ func (r *Router) processMessage(message transport.Message) {
 		}
 	}
 
-	r.Logger.Debug(fmt.Sprintf("Received message '%s' with normal action. Resorting to default processor", componentID.Title), false, shared.MainComponentName)
+	//r.Logger.Debug(fmt.Sprintf("Received message '%s' with normal action. Resorting to default processor", componentID.Title), false, shared.MainComponentName)
 	defaultProcessor := r.messageHandlers["__default__"]
 	err := defaultProcessor.ProcessMessage(message)
 	if err != nil {

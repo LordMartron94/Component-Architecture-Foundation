@@ -58,7 +58,9 @@ func (c *CommunicationHandler) sendMessage(target peer.Peer, message transport.M
 		return err
 	}
 
-	c.Logger.Info(fmt.Sprintf("Sending message to peer: '%s'; '%s'", target.Address, message.Payload.Action), false, shared.NetworkingComponentName)
+	if message.Payload.Action != "response" {
+		c.Logger.Info(fmt.Sprintf("Sending message to peer: '%s'; '%s'", target.Address, message.Payload.Action), false, shared.NetworkingComponentName)
+	}
 
 	encodedMessage = append(encodedMessage, []byte(shared.EndOfMessageToken)...)
 

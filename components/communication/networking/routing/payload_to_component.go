@@ -15,15 +15,13 @@ type PayloadToComponent struct {
 // SearchForComponent finds the associated component for a message payload. Returns an error if no match is found.
 func (p *PayloadToComponent) SearchForComponent(payload transport.MessagePayload, components []transport.ComponentID) (transport.ComponentID, error) {
 	for _, component := range components {
-		p.Logger.Debug(fmt.Sprintf("Checking component with ID '%s'", component.Title), false, shared.RoutingComponentName)
 		for _, capability := range component.Capabilities {
-			p.Logger.Debug(fmt.Sprintf("Checking capability '%s' for component '%s'", capability.Name, component.Title), false, shared.RoutingComponentName)
 			if capability.Name != payload.Action {
 				continue
 			}
 
 			if p.signatureMatchesArgs(capability.Signature, payload.Args) {
-				p.Logger.Debug(fmt.Sprintf("Found component with ID '%s' for payload", component.Title), false, shared.RoutingComponentName)
+				p.Logger.Debug(fmt.Sprintf("Found component '%s@%s' for payload with capability '%s'", component.Title, component.Version, payload.Action), false, shared.RoutingComponentName)
 				return component, nil
 			}
 		}
