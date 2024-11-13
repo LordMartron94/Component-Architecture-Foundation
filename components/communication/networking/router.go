@@ -146,12 +146,10 @@ func (r *Router) handleMessages() {
 	for {
 		select {
 		case msg := <-r.MessageChannel:
-			componentID, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
+			_, err := r.componentRegistrar.GetComponentByID(*msg.RequesterID)
 
 			if err != nil {
 				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
-			} else {
-				r.Logger.Debug(fmt.Sprintf("Gotten message from '%s@%s' with payload '%s'", componentID.Title, componentID.Version, msg.Payload), false, shared.MainComponentName)
 			}
 
 			r.processMessage(msg)
