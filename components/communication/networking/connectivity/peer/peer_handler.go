@@ -128,7 +128,6 @@ func (p *PeerHandler) GetActiveConnectionsNumber() int {
 
 func (p *PeerHandler) RemovePeer(addr net.Addr) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	p.Logger.Debug(fmt.Sprintf("Removing peer by address: %v", addr.String()), false, shared.NetworkingComponentName)
 
@@ -139,6 +138,8 @@ func (p *PeerHandler) RemovePeer(addr net.Addr) {
 			break
 		}
 	}
+
+	p.mu.Unlock()
 
 	p.Logger.Info(fmt.Sprintf("Router is running. Active peers: %d", p.GetActiveConnectionsNumber()), false, shared.NetworkingComponentName)
 }
