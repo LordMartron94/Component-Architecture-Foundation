@@ -24,8 +24,9 @@ type LifeCycleManager struct {
 func (l *LifeCycleManager) ListenForTermination() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGKILL, syscall.SIGQUIT)
-	<-sigs
-	l.Logger.Info("Received termination signal, shutting down server gracefully...", false, shared.MainComponentName)
+
+	sig := <-sigs
+	l.Logger.Info(fmt.Sprintf("Received termination signal: %v, shutting down server gracefully...", sig), false, shared.MainComponentName)
 	l.ShutdownServer()
 	l.Logger.Info("Server shutdown complete.", false, shared.MainComponentName)
 }
