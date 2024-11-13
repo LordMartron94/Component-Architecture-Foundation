@@ -66,6 +66,15 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 		select {
 		case <-d.shutdownChan:
 			d.Logger.Debug("Stopped listening for data because of shutdown signal.", false, shared.NetworkingComponentName)
+
+			// Check if stopScanning is already closed
+			if _, ok := <-stopScanning; !ok {
+				d.Logger.Debug("StopScanning is already closed.", false, shared.NetworkingComponentName)
+				return
+			}
+
+			// If stopScanning is not closed, close it and return
+			d.Logger.Debug("Closing stopScanning channel.", false, shared.NetworkingComponentName)
 			close(stopScanning)
 			return
 		case data := <-dataChan:
