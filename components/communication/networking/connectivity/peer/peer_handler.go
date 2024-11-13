@@ -99,7 +99,6 @@ func (p *PeerHandler) detectInactiveConnections(keepAliveInterval time.Duration)
 
 func (p *PeerHandler) AddPeer(conn net.Conn, component transport.ComponentID) *Peer {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	peer := &Peer{
 		Address:             conn.RemoteAddr(),
@@ -113,6 +112,9 @@ func (p *PeerHandler) AddPeer(conn net.Conn, component transport.ComponentID) *P
 	p.allPeers = append(p.allPeers, peer)
 	p.lastAliveMessages[peer.Address.String()] = time.Now()
 
+	p.mu.Unlock()
+
+	p.Logger.Debug(fmt.Sprintf("Adding new peer: %v", conn.RemoteAddr().String()), false, shared.NetworkingComponentName)
 	p.Logger.Info(fmt.Sprintf("Router is running. Active peers: %d", p.GetActiveConnectionsNumber()), false, shared.NetworkingComponentName)
 	return peer
 }
