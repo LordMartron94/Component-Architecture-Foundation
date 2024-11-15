@@ -37,9 +37,10 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	shutdownChan := make(chan struct{})
 
 	server := transport.ComponentID{
-		Title:        shared.ServerName,
-		Version:      shared.ServerVersion,
-		Capabilities: nil,
+		Title:             shared.ServerName,
+		Version:           shared.ServerVersion,
+		Capabilities:      nil,
+		ComponentUniqueID: shared.ServerUUID,
 	}
 
 	peerHandler := peer.NewPeerHandler(logger)
