@@ -13,6 +13,7 @@ type DefaultMessageHandler struct {
 	Listener                               ListenerInterface
 	GetTargetComponentForMessage           func(message transport.Message) (transport.ComponentID, error)
 	GetComponentByID                       func(componentID string) (transport.ComponentID, error)
+	GetExpectedClientResponses             func(message transport.Message) int
 	unrepliedMessageWithRequester          map[string]transport.ComponentID
 	mapSystemMessageIDToComponentMessageID map[string]string
 	initialized                            bool
@@ -41,10 +42,11 @@ func (d *DefaultMessageHandler) ProcessMessage(message transport.Message) error 
 func (d *DefaultMessageHandler) processRequest(message transport.Message) error {
 	originalComponent, err := d.GetComponentByID(*message.SenderID)
 	targetComponent, err := d.GetTargetComponentForMessage(message)
+	expectedClientResponses := d.GetExpectedClientResponses(message)
 
 	if err != nil {
 		d.Logger.Error(fmt.Sprintf("Failed to find target component for action '%s' requested by '%s@%s' message: %s", message.Payload.Action, originalComponent.Title, originalComponent.Version, err.Error()), false, shared.MainComponentName)
-		_, err := d.Listener.SendResponse(*message.SenderID, []byte(shared.NoMatchFoundResponsePayload), *message.UniqueID)
+		_, err := d.Listener.SendResponse(*message.SenderID, []byte(shared.NoMatchFoundResponsePayload), *message.UniqueID, false)
 
 		if err != nil {
 			d.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", originalComponent.Title, originalComponent.Version, err.Error()), false, shared.MainComponentName)
@@ -53,6 +55,21 @@ func (d *DefaultMessageHandler) processRequest(message transport.Message) error 
 
 		return nil
 	}
+
+	payload, err := transport.MessagePayloadFromBytes([]byte(shared.DefaultSuccessResponsePayload))
+	payload.Args = append(payload.Args, transport.Argument{
+		Type:  "int",
+		Value: fmt.Sprintf("%d", expectedClientResponses),
+	})
+
+	bytes, err := transport.MessagePayloadToBytes(payload)
+
+	if err != nil {
+		d.Logger.Warn(fmt.Sprintf("Failed to create message payload: '%s'", err.Error()), false, shared.MainComponentName)
+		return err
+	}
+
+	_, err = d.Listener.SendResponse(*message.SenderID, bytes, *message.UniqueID, false)
 
 	uuid, err := d.Listener.SendRequest(targetComponent.ComponentUniqueID, *message.Payload)
 
@@ -69,9 +86,11 @@ func (d *DefaultMessageHandler) processRequest(message transport.Message) error 
 
 func (d *DefaultMessageHandler) processResponse(message transport.Message) error {
 	bytes, err := transport.MessagePayloadToBytes(*message.Payload)
+
 	targetComponent := d.unrepliedMessageWithRequester[message.TargetID]
 	targetID := d.mapSystemMessageIDToComponentMessageID[message.TargetID]
-	_, err = d.Listener.SendResponse(targetComponent.ComponentUniqueID, bytes, targetID)
+
+	_, err = d.Listener.SendResponse(targetComponent.ComponentUniqueID, bytes, targetID, true)
 
 	if err != nil {
 		d.Logger.Error(fmt.Sprintf("Failed to send request to '%s@%s': %s", targetComponent.Title, targetComponent.Version, err.Error()), false, shared.MainComponentName)

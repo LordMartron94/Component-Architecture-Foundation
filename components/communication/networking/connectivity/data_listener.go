@@ -88,8 +88,6 @@ func (d *DataListener) sendHandleResponse(decodedMessage transport.Message, deco
 		return
 	}
 
-	d.sendResponse(*decodedMessage.SenderID, []byte(shared.DefaultSuccessResponsePayload), *decodedMessage.UniqueID)
-
 	return
 }
 

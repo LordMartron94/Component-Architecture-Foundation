@@ -28,7 +28,7 @@ func (r *RegisterMessageHandler) ProcessMessage(message transport.Message) error
 	r.Logger.Debug(fmt.Sprintf("Capabilities: %s", capabilities), false, shared.MainComponentName)
 	component := r.RegisterComponent(message)
 
-	_, err = r.Listener.SendResponse(*message.SenderID, []byte(shared.RegisterSuccessResponsePayload), *message.UniqueID)
+	_, err = r.Listener.SendResponse(*message.SenderID, []byte(shared.RegisterSuccessResponsePayload), *message.UniqueID, false)
 	if err != nil {
 		r.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", component.Title, component.Version, err.Error()), false, shared.MainComponentName)
 		return err

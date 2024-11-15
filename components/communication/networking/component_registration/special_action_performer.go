@@ -6,7 +6,7 @@ import (
 )
 
 type RequesterInterface interface {
-	SendResponse(id string, response []byte, targetUUID string) (string, error)
+	SendResponse(id string, response []byte, targetUUID string, isClientResponse bool) (string, error)
 }
 
 type SpecialActionPerformer struct {

@@ -107,6 +107,7 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		Listener:                     listener,
 		GetTargetComponentForMessage: router.getTargetComponentForMessage,
 		GetComponentByID:             componentRegistrar.GetComponentByID,
+		GetExpectedClientResponses:   router.getExpectedClientResponses,
 	})
 	router.RegisterMessageHandler("unregister", &processors.UnregisterMessageHandler{
 		Logger:             logger,
@@ -191,4 +192,8 @@ func (r *Router) info() {
 		r.Logger.Debug(fmt.Sprintf("Router is running. Components registered: %d | Active peers: %d", len(r.componentRegistrar.GetRegisteredComponents()), r.Listener.GetActiveConnectionsNumber()), false, shared.InfoComponentName)
 		time.Sleep(time.Minute * 10)
 	}
+}
+
+func (r *Router) getExpectedClientResponses(message transport.Message) int {
+	return r.payloadToComponent.GetExpectedClientResponses(*message.Payload, r.componentRegistrar.GetRegisteredComponents())
 }

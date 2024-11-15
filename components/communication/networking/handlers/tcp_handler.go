@@ -47,8 +47,23 @@ func (tcp *TCPHandler) StartListenLoop() error {
 	return tcp.ConnectionHandler.StartListenLoop()
 }
 
-func (tcp *TCPHandler) SendResponse(id string, payload []byte, targetUUID string) (string, error) {
-	return tcp.CommunicationHandler.SendResponse(id, payload, targetUUID)
+func (tcp *TCPHandler) SendResponse(id string, payload []byte, targetUUID string, isClientResponse bool) (string, error) {
+	payloadObject, _ := transport.MessagePayloadFromBytes(payload)
+
+	isClientResponseString := "false"
+
+	if isClientResponse {
+		isClientResponseString = "true"
+	}
+
+	payloadObject.Args = append(payloadObject.Args, transport.Argument{
+		Type:  "bool",
+		Value: isClientResponseString,
+	})
+
+	payloadBytes, _ := transport.MessagePayloadToBytes(payloadObject)
+
+	return tcp.CommunicationHandler.SendResponse(id, payloadBytes, targetUUID)
 }
 
 func (tcp *TCPHandler) SendRequest(id string, payload transport.MessagePayload) (string, error) {
