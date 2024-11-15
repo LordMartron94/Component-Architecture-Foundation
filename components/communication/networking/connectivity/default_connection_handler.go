@@ -177,7 +177,7 @@ func (d *DefaultConnectionHandler) sendResponse(component string, payload []byte
 	}
 }
 
-func (d *DefaultConnectionHandler) sendRawResponse(payload []byte, connection net.Conn, messageUUID string) {
+func (d *DefaultConnectionHandler) sendRawResponse(payload []byte, connection net.Conn, targetUUID string) {
 	parsedPayload, err := transport.MessagePayloadFromBytes(payload)
 
 	if err != nil {
@@ -185,11 +185,7 @@ func (d *DefaultConnectionHandler) sendRawResponse(payload []byte, connection ne
 		return
 	}
 
-	message := d.MessageUtility.CreateMessage(parsedPayload)
-	message.Payload.Args = append(message.Payload.Args, transport.Argument{
-		Type:  "string",
-		Value: messageUUID,
-	})
+	message := d.MessageUtility.CreateMessage(parsedPayload, targetUUID)
 	encodedMessage, err := d.MessageCoder.Encode(message)
 	encodedMessage = append(encodedMessage, []byte(shared.EndOfMessageToken)...)
 	connection.Write(encodedMessage)

@@ -18,7 +18,7 @@ type Message struct {
 	TargetID string          `json:"target_id"`
 }
 
-func NewMessage(requester ComponentID, payload MessagePayload) *Message {
+func NewMessage(requester ComponentID, payload MessagePayload, targetId string) *Message {
 	currentTime := time.Now()
 
 	return &Message{
@@ -26,6 +26,7 @@ func NewMessage(requester ComponentID, payload MessagePayload) *Message {
 		TimeSent: &currentTime,
 		Payload:  &payload,
 		UniqueID: GenerateUniqueID(),
+		TargetID: targetId,
 	}
 }
 

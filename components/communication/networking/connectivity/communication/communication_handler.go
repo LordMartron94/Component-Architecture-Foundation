@@ -31,8 +31,7 @@ func (c *CommunicationHandler) SendResponse(id string, payload []byte, targetUUI
 		return "", err
 	}
 
-	createdMessage := c.MessageUtility.CreateMessage(createdPayload)
-	createdMessage.TargetID = targetUUID
+	createdMessage := c.MessageUtility.CreateMessage(createdPayload, targetUUID)
 	return *createdMessage.UniqueID, c.sendMessage(*associatedPeer, createdMessage)
 }
 
@@ -43,7 +42,7 @@ func (c *CommunicationHandler) SendRequest(id string, payload transport.MessageP
 		return "", err
 	}
 
-	createdMessage := c.MessageUtility.CreateMessage(payload)
+	createdMessage := c.MessageUtility.CreateMessage(payload, "")
 	return *createdMessage.UniqueID, c.sendMessage(*associatedPeer, createdMessage)
 }
 

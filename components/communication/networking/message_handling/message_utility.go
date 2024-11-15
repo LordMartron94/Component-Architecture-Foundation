@@ -28,7 +28,7 @@ func (m *MessageUtility) DecodeMessage(data []byte) (transport.Message, error) {
 	return decodedMessage, nil
 }
 
-func (m *MessageUtility) CreateMessage(payload transport.MessagePayload) transport.Message {
-	message := transport.NewMessage(m.Server, payload)
+func (m *MessageUtility) CreateMessage(payload transport.MessagePayload, targetID string) transport.Message {
+	message := transport.NewMessage(m.Server, payload, targetID)
 	return *message
 }
