@@ -6,6 +6,7 @@ import (
 	"github.com/component-architecture-foundation/logging"
 	"github.com/component-architecture-foundation/networking/connectivity"
 	"github.com/component-architecture-foundation/networking/connectivity/communication"
+	"github.com/component-architecture-foundation/networking/connectivity/peer"
 	"github.com/component-architecture-foundation/networking/transport"
 	"github.com/component-architecture-foundation/shared"
 )
@@ -68,4 +69,8 @@ func (tcp *TCPHandler) SendResponse(id string, payload []byte, targetUUID string
 
 func (tcp *TCPHandler) SendRequest(id string, payload transport.MessagePayload) (string, error) {
 	return tcp.CommunicationHandler.SendRequest(id, payload)
+}
+
+func (tcp *TCPHandler) StopConnection(peer *peer.Peer) error {
+	return tcp.ConnectionHandler.StopConnection(peer)
 }

@@ -28,9 +28,13 @@ type DefaultConnectionHandler struct {
 
 	MessageChannel chan transport.Message
 	shutdownChan   chan struct{}
+
+	listeners map[*peer.Peer]chan struct{}
 }
 
 func NewDefaultConnectionHandler(logger *logging.HoornLogger, listenAddress string, messageCoder coding.MessageCoderInterface, peerHandler peer.PeerHandlerInterface, messageUtility message_handling.MessageUtilityInterface, communicationHandler communication.CommunicationHandlerInterface, messageChannel chan transport.Message, shutdownChan chan struct{}) *DefaultConnectionHandler {
+	stopListeningChan := make(chan struct{})
+
 	handler := &DefaultConnectionHandler{
 		Logger:        logger,
 		ListenAddress: listenAddress,
@@ -42,6 +46,8 @@ func NewDefaultConnectionHandler(logger *logging.HoornLogger, listenAddress stri
 
 		MessageChannel: messageChannel,
 		shutdownChan:   shutdownChan,
+
+		listeners: make(map[*peer.Peer]chan struct{}),
 	}
 
 	dataListener := DataListener{
@@ -50,7 +56,7 @@ func NewDefaultConnectionHandler(logger *logging.HoornLogger, listenAddress stri
 		MessageUtility: messageUtility,
 		MessageChannel: messageChannel,
 		sendResponse:   handler.sendResponse,
-		shutdownChan:   shutdownChan,
+		shutdownChan:   stopListeningChan,
 	}
 
 	handler.DataListener = dataListener
@@ -78,6 +84,7 @@ func (d *DefaultConnectionHandler) StartListenLoop() error {
 	for {
 		select {
 		case <-d.shutdownChan:
+			close(d.DataListener.shutdownChan)
 			return nil
 		default:
 			conn, err := listener.Accept()
@@ -97,6 +104,12 @@ func (d *DefaultConnectionHandler) GetActiveConnectionsNumber() int {
 
 func (d *DefaultConnectionHandler) CloseConnections() {
 	d.PeerHandler.ClosePeerConnections()
+}
+
+func (d *DefaultConnectionHandler) StopConnection(peer *peer.Peer) error {
+	close(d.listeners[peer])
+	delete(d.listeners, peer)
+	return nil
 }
 
 func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
@@ -166,7 +179,10 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 
 	d.Logger.Info(fmt.Sprintf("New connection from '%s'", conn.RemoteAddr()), false, shared.NetworkingComponentName)
 
-	go d.DataListener.ListenForData(*peer, scanner)
+	stopListeningChan := make(chan struct{})
+	d.listeners[peer] = stopListeningChan
+
+	go d.DataListener.ListenForData(*peer, scanner, stopListeningChan)
 }
 
 func (d *DefaultConnectionHandler) sendResponse(component string, payload []byte, targetUUID string) {

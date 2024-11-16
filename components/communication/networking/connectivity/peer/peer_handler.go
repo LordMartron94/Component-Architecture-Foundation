@@ -17,6 +17,7 @@ type PeerHandler struct {
 	allPeers          []*Peer
 	lastAliveMessages map[string]time.Time
 	lastRemovedPeerAt map[string]time.Time
+	stopConnection    *func(peer *Peer) error
 	mu                sync.Mutex
 }
 
@@ -135,6 +136,18 @@ func (p *PeerHandler) RemovePeer(addr net.Addr) {
 		if peer.Address.String() == addr.String() {
 			p.activeConnections = append(p.activeConnections[:i], p.activeConnections[i+1:]...)
 			p.allPeers = append(p.allPeers[:i], p.allPeers[i+1:]...)
+
+			if p.stopConnection != nil {
+				actualFunc := *p.stopConnection
+
+				err := actualFunc(peer)
+				if err != nil {
+					p.Logger.Warn(fmt.Sprintf("Error stopping connection: %v", err), false, shared.NetworkingComponentName)
+				}
+			} else {
+				p.Logger.Warn("No stopConnection function provided", false, shared.NetworkingComponentName)
+			}
+
 			break
 		}
 	}
@@ -180,4 +193,8 @@ func (p *PeerHandler) KeepAlive(peer *Peer) {
 	}
 
 	p.lastAliveMessages[peer.Address.String()] = time.Now()
+}
+
+func (p *PeerHandler) SetStopConnection(stopConnection func(peer *Peer) error) {
+	p.stopConnection = &stopConnection
 }

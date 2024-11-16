@@ -114,6 +114,8 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 		PeerHandler: peerHandler,
 	})
 
+	peerHandler.SetStopConnection(router.StopConnection)
+
 	return router
 }
 
@@ -191,4 +193,8 @@ func (r *Router) info() {
 
 func (r *Router) getExpectedClientResponses(message transport.Message) int {
 	return r.payloadToComponent.GetExpectedClientResponses(*message.Payload, r.componentRegistrar.GetRegisteredComponents())
+}
+
+func (r *Router) StopConnection(p *peer.Peer) error {
+	return r.Listener.StopConnection(p)
 }

@@ -26,7 +26,7 @@ type DataListener struct {
 	shutdownChan chan struct{}
 }
 
-func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) {
+func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner, stopListeningChan chan struct{}) {
 	d.Logger.Debug(fmt.Sprintf("Started listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 	defer d.Logger.Debug(fmt.Sprintf("Stopped listening for data from peer: '%s'", peer.Address), false, shared.NetworkingComponentName)
 
@@ -63,6 +63,19 @@ func (d *DataListener) ListenForData(peer peer.Peer, scanner *scanning.Scanner) 
 		select {
 		case <-d.shutdownChan:
 			d.Logger.Debug("Stopped listening for data because of shutdown signal.", false, shared.NetworkingComponentName)
+
+			// Check if stopScanning is already closed
+			if _, ok := <-stopScanning; !ok {
+				d.Logger.Debug("StopScanning is already closed.", false, shared.NetworkingComponentName)
+				return
+			}
+
+			// If stopScanning is not closed, close it and return
+			d.Logger.Debug("Closing stopScanning channel.", false, shared.NetworkingComponentName)
+			close(stopScanning)
+			return
+		case <-stopListeningChan:
+			d.Logger.Debug("Stopped listening for data because of stop listening signal.", false, shared.NetworkingComponentName)
 
 			// Check if stopScanning is already closed
 			if _, ok := <-stopScanning; !ok {

@@ -4,7 +4,7 @@ const MainComponentName = "Middleman"
 const NetworkingComponentName = "Middleman.Networker"
 const RoutingComponentName = "Middleman.Router"
 const InfoComponentName = "Middleman.Info"
-const ScannerComponentName = "Middleman.Network.Scanner"
+const ScannerComponentName = "Middleman.Networker.Scanner"
 
 const ListeningHost = "127.0.0.1"
 const ListeningPort = "50000"
