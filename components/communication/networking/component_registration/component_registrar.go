@@ -9,15 +9,10 @@ import (
 	"github.com/component-architecture-foundation/shared"
 )
 
-type SpecialActionPerformerInterface interface {
-	PerformAnySpecialActions(component transport.ComponentID)
-}
-
 type ComponentRegistrar struct {
-	Logger                 *logging.HoornLogger
-	registeredComponents   []transport.ComponentID
-	SpecialActionPerformer SpecialActionPerformerInterface
-	Listener               message_handling.ListenerInterface
+	Logger               *logging.HoornLogger
+	registeredComponents []transport.ComponentID
+	Listener             message_handling.ListenerInterface
 }
 
 func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transport.ComponentID {
@@ -38,7 +33,6 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transp
 		return *componentID
 	}
 
-	c.SpecialActionPerformer.PerformAnySpecialActions(*componentID)
 	c.registeredComponents = append(c.registeredComponents, *componentID)
 
 	c.Logger.Info(fmt.Sprintf("Router is running. Components Registered: %d", len(c.GetRegisteredComponents())), false, shared.NetworkingComponentName)

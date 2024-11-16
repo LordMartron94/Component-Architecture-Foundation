@@ -55,14 +55,9 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
 	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan, wg)
 
-	specialActionPerformer := component_registration.SpecialActionPerformer{
-		Logger:             logger,
-		RequesterInterface: listener,
-	}
 	componentRegistrar := component_registration.ComponentRegistrar{
-		Logger:                 logger,
-		SpecialActionPerformer: &specialActionPerformer,
-		Listener:               listener,
+		Logger:   logger,
+		Listener: listener,
 	}
 
 	shutdownComponents := lifecycle_managing.ShutdownComponents{
