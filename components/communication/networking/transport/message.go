@@ -53,6 +53,13 @@ func (m *Message) GetComponentIDFromRegistrationMessage(logger *logging.HoornLog
 		return nil, err
 	}
 
+	for capabilityIndex := range capabilities {
+		if !capabilities[capabilityIndex].Signature.IsValid() {
+			logger.Error("Invalid signature in capabilities", false, shared.NetworkingComponentName)
+			return nil, fmt.Errorf("invalid signature in capabilities")
+		}
+	}
+
 	cID := ComponentID{
 		Title:             m.Payload.Args[0].Value,
 		Version:           m.Payload.Args[1].Value,

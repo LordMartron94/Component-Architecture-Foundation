@@ -15,7 +15,7 @@ type ComponentRegistrar struct {
 	Listener             message_handling.ListenerInterface
 }
 
-func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transport.ComponentID {
+func (c *ComponentRegistrar) RegisterComponent(message transport.Message) (transport.ComponentID, error) {
 	componentID, err := message.GetComponentIDFromRegistrationMessage(c.Logger)
 
 	if err != nil {
@@ -23,21 +23,21 @@ func (c *ComponentRegistrar) RegisterComponent(message transport.Message) transp
 		_, err := c.Listener.SendResponse(shared.ServerUUID, []byte(shared.InvalidRequestResponsePayload), componentID.ComponentUniqueID, false)
 		if err != nil {
 			c.Logger.Error(fmt.Sprintf("Failed to send response to '%s@%s': %s", componentID.Title, componentID.Version, err.Error()), false, shared.NetworkingComponentName)
-			return transport.ComponentID{}
+			return transport.ComponentID{}, err
 		}
-		return transport.ComponentID{}
+		return transport.ComponentID{}, err
 	}
 
 	if containsComponentID(c.registeredComponents, *componentID) {
 		c.Logger.Info(fmt.Sprintf("Component %s is already registered.", componentID.Title), false, shared.NetworkingComponentName)
-		return *componentID
+		return *componentID, nil
 	}
 
 	c.registeredComponents = append(c.registeredComponents, *componentID)
 
 	c.Logger.Info(fmt.Sprintf("Router is running. Components Registered: %d", len(c.GetRegisteredComponents())), false, shared.NetworkingComponentName)
 
-	return *componentID
+	return *componentID, nil
 }
 
 func (c *ComponentRegistrar) RemoveRegisteredComponent(id string) {
