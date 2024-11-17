@@ -1,6 +1,8 @@
 package transport
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Capability struct {
 	Name      string    `json:"name"`

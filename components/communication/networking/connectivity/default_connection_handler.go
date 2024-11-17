@@ -165,11 +165,24 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	//d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
 	d.MessageChannel <- decodedData
 
-	componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
+	componentID, err := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
 
 	if componentID == nil {
 		d.Logger.Error("Failed to get component ID from message during registration; closing connection", false, shared.NetworkingComponentName)
-		d.sendRawResponse([]byte(shared.InvalidRequestResponsePayload), conn, *decodedData.UniqueID)
+
+		payload, err1 := transport.MessagePayloadFromBytes([]byte(shared.InvalidRequestResponsePayload))
+		payload.Args[0].Value = payload.Args[0].Value + fmt.Sprintf("; something went wrong with component ID extraction: %s", err)
+
+		payloadBytes, err2 := transport.MessagePayloadToBytes(payload)
+
+		if err1 != nil || err2 != nil {
+			d.Logger.Error(fmt.Sprintf("Failed to create message payload: '%s/%s'", err1.Error(), err2.Error()), false, shared.NetworkingComponentName)
+			time.Sleep(time.Second)
+			conn.Close()
+			return
+		}
+
+		d.sendRawResponse(payloadBytes, conn, *decodedData.UniqueID)
 		time.Sleep(time.Second)
 		conn.Close()
 		return

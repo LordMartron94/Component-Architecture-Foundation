@@ -54,9 +54,16 @@ func (m *Message) GetComponentIDFromRegistrationMessage(logger *logging.HoornLog
 	}
 
 	for capabilityIndex := range capabilities {
-		if !capabilities[capabilityIndex].Signature.IsValid() {
-			logger.Error("Invalid signature in capabilities", false, shared.NetworkingComponentName)
-			return nil, fmt.Errorf("invalid signature in capabilities")
+		capability := &capabilities[capabilityIndex]
+		signature := &capability.Signature
+
+		valid, err := signature.IsValid()
+
+		if !valid {
+			errMsg := fmt.Sprintf("Invalid signature in capabilities (%s): %s", capability.Name, err.Error())
+
+			logger.Error(errMsg, false, shared.NetworkingComponentName)
+			return nil, fmt.Errorf(errMsg)
 		}
 	}
 

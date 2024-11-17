@@ -1,6 +1,9 @@
 package transport
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type Signature struct {
 	NumOfArgs     int      `json:"num_of_args"`
@@ -14,6 +17,18 @@ func (s *Signature) Equal(signature Signature) bool {
 		reflect.DeepEqual(s.ResponseTypes, signature.ResponseTypes)
 }
 
-func (s *Signature) IsValid() bool {
-	return s.NumOfArgs >= 0 && len(s.TypeOfArgs) == s.NumOfArgs && len(s.ResponseTypes) >= 1
+func (s *Signature) IsValid() (bool, error) {
+	if !(s.NumOfArgs >= 0) {
+		return false, fmt.Errorf("number of arguments must be non-negative")
+	}
+
+	if !(len(s.TypeOfArgs) == s.NumOfArgs) {
+		return false, fmt.Errorf("type of arguments length must match number of arguments")
+	}
+
+	if !(len(s.ResponseTypes) >= 1) {
+		return false, fmt.Errorf("at least one response type must be provided")
+	}
+
+	return true, nil
 }
