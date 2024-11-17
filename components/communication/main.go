@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"sync"
@@ -51,6 +53,17 @@ func main() {
 
 	logger := getLogger(applicationName)
 	logger.Info(fmt.Sprintf("Starting server '%s@%s'...", shared.ServerName, shared.ServerVersion), false, shared.MainComponentName)
+
+	go func() {
+		logger.Info(fmt.Sprintf("Starting pprof network listener on localhost:6060"), false, shared.MainComponentName)
+
+		err := http.ListenAndServe("localhost:6060", nil)
+
+		if err != nil {
+			logger.Critical(fmt.Sprintf("Something went wrong while starting the pprof network Listener: '%s'", err.Error()), false, shared.MainComponentName)
+			return
+		}
+	}()
 
 	var wg sync.WaitGroup
 
