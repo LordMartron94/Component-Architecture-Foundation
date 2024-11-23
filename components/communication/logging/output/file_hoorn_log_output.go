@@ -209,4 +209,6 @@ func (fhl *FileHoornLogOutput) Save() {
 			fhl.HandleCombined(hoornLog)
 		}
 	}
+	
+	fhl.logsToWrite = make([]*common.HoornLog, 0, 300)
 }
