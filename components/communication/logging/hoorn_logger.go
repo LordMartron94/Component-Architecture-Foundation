@@ -46,7 +46,7 @@ func NewHoornLogger(minLevel common.LogLevel, shutdownSignal chan struct{}, wg *
 		for {
 			select {
 			case <-ticker.C:
-				logger.save()
+				logger.Save()
 			case <-shutdownSignal:
 				return
 			}
@@ -77,12 +77,12 @@ func (hL *HoornLogger) ListenForShutdown() {
 
 	<-hL.shutdownSignal
 
-	hL.save()
+	hL.Save()
 
 	hL.waitGroup.Done()
 }
 
-func (hL *HoornLogger) save() {
+func (hL *HoornLogger) Save() {
 	for _, outputMethod := range hL.outputs {
 		outputMethod.Save()
 	}

@@ -72,6 +72,14 @@ func main() {
 
 	coder := coding.JsonMessageCoder{Logger: &logger}
 
+	//  Recover from panics
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Critical(fmt.Sprintf("Recovered from panic: %v", r), false, shared.MainComponentName)
+			logger.Save()
+		}
+	}()
+
 	router := networking.NewRouter(&logger, &wg, &coder, shutdownChan)
 	router.Start()
 
