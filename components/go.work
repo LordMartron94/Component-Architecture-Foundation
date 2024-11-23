@@ -1,0 +1,10 @@
+go 1.23
+
+toolchain go1.23.0
+
+use (
+	benchmarks
+	communication
+)
+
+replace github.com/LordMartron94/Component-Architecture-Foundation/components/communication v0.0.0-unpublished => ./communication

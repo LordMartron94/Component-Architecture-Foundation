@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 // Scanner is a custom scanner that reads from an io.Reader and splits the input

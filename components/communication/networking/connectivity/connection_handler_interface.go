@@ -1,7 +1,7 @@
 package connectivity
 
 import (
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
 )
 
 type ConnectionHandlerInterface interface {

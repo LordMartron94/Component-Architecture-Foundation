@@ -3,9 +3,9 @@ package routing
 import (
 	"fmt"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/transport"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 type PayloadToComponent struct {
@@ -53,9 +53,13 @@ func (p *PayloadToComponent) GetExpectedClientResponses(payload transport.Messag
 			}
 
 			if p.signatureMatchesArgs(capability.Signature, payload.Args) {
-				p.Logger.Debug(fmt.Sprintf("Found component '%s@%s' for payload with capability '%s'", component.Title, component.Version, payload.Action), false, shared.RoutingComponentName)
+				//p.Logger.Debug(fmt.Sprintf("Found component '%s@%s' for payload with capability '%s'", component.Title, component.Version, payload.Action), false, shared.RoutingComponentName)
 
 				if len(capability.Signature.ResponseTypes) > 0 {
+					if capability.Signature.ResponseTypes[0] == "void" {
+						return 0
+					}
+
 					return 1
 				}
 

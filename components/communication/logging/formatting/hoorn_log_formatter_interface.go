@@ -1,7 +1,7 @@
 package formatting
 
 import (
-	"github.com/component-architecture-foundation/logging/common"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
 )
 
 type HoornLogFormatterInterface interface {

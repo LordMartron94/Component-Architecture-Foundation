@@ -5,19 +5,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/coding"
-	"github.com/component-architecture-foundation/networking/component_registration"
-	"github.com/component-architecture-foundation/networking/connectivity"
-	"github.com/component-architecture-foundation/networking/connectivity/communication"
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
-	"github.com/component-architecture-foundation/networking/handlers"
-	"github.com/component-architecture-foundation/networking/lifecycle_managing"
-	"github.com/component-architecture-foundation/networking/message_handling"
-	"github.com/component-architecture-foundation/networking/message_handling/processors"
-	"github.com/component-architecture-foundation/networking/routing"
-	"github.com/component-architecture-foundation/networking/transport"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/coding"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/component_registration"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/communication"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/handlers"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/lifecycle_managing"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/message_handling"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/message_handling/processors"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/routing"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 type Router struct {
@@ -53,7 +53,7 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	}
 
 	connectionHandler := connectivity.NewDefaultConnectionHandler(logger, shared.ListeningAddress, messageCoder, peerHandler, &messageUtility, &communicationHandler, msgChan, shutdownChan)
-	listener := handlers.NewTCPHandler(logger, msgChan, connectionHandler, &communicationHandler, shutdownChan, wg)
+	listener := handlers.NewTCPHandler(logger, connectionHandler, &communicationHandler, shutdownChan, wg)
 
 	componentRegistrar := component_registration.ComponentRegistrar{
 		Logger:   logger,
@@ -151,12 +151,12 @@ func (r *Router) handleMessages() {
 				r.Logger.Warn(fmt.Sprintf("Failed to get component ID from message: '%s' (this can be ignored pre-registration)", err.Error()), false, shared.MainComponentName)
 			}
 
-			go r.processMessage(msg, componentID, err)
+			go r.ProcessMessage(msg, componentID, err)
 		}
 	}
 }
 
-func (r *Router) processMessage(message transport.Message, componentID transport.ComponentID, err1 error) {
+func (r *Router) ProcessMessage(message transport.Message, componentID transport.ComponentID, err1 error) {
 	for action, processor := range r.messageHandlers {
 		if action == message.Payload.Action {
 			err := processor.ProcessMessage(message)
@@ -197,4 +197,25 @@ func (r *Router) getExpectedClientResponses(message transport.Message) int {
 
 func (r *Router) StopConnection(p *peer.Peer) error {
 	return r.Listener.StopConnection(p)
+}
+
+// IsComponentRegistered is used for Benchmarks only since it uses a componentUUID hardcoded string.
+func (r *Router) IsComponentRegistered(componentUUID string) bool {
+	registered := r.componentRegistrar.GetRegisteredComponents()
+
+	for _, component := range registered {
+		if component.ComponentUniqueID == componentUUID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *Router) Stop() {
+	r.lifecycleManager.ShutdownServer()
+}
+
+func (r *Router) WaitUntilShutdown() {
+	r.waitGroup.Wait()
 }
