@@ -1,3 +1,0 @@
-[submodule "PyCommon"]
-	path = benchmarking/_internal/common
-	url = https://github.com/LordMartron94/py-common.git
