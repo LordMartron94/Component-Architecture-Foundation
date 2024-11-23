@@ -196,7 +196,7 @@ func (fhl *FileHoornLogOutput) Output(hoornLog *common.HoornLog) {
 }
 
 func (fhl *FileHoornLogOutput) Save() {
-	formatter := formatting.HoornLogTextFormatter{}
+	formatter := formatting.NewHoornLogTextFormatter()
 
 	logsMap := make(map[string][]string)
 

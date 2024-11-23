@@ -14,7 +14,7 @@ func (factory HoornLogFactory) CreateHoornLog(level common.LogLevel, message str
 	var currentTime time.Time = time.Now()
 
 	var formatters []formatting.HoornLogFormatterInterface = []formatting.HoornLogFormatterInterface{
-		formatting.HoornLogTextFormatter{},
+		formatting.NewHoornLogTextFormatter(),
 		formatting.NewHoornLogColorFormatter(),
 	}
 
