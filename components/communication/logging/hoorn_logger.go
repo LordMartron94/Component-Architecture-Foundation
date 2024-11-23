@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"sync"
+
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/factory"
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/output"
@@ -14,25 +16,37 @@ type HoornLogger struct {
 
 	// hoornLogFactory is a HoornLogFactoryInterface object that will be used to create new HoornLog objects.
 	hoornLogFactory factory.HoornLogFactory
+
+	// shutdownSignal is a receive-only channel that will be closed when the logger should stop logging.
+	shutdownSignal chan struct{}
+
+	// waitGroup is a synchronization primitive that will be used to wait for all goroutines to finish.
+	waitGroup *sync.WaitGroup
 }
 
-func NewHoornLogger(minLevel common.LogLevel, outputs ...output.HoornLogOutputInterface) HoornLogger {
+func NewHoornLogger(minLevel common.LogLevel, shutdownSignal chan struct{}, wg *sync.WaitGroup, outputs ...output.HoornLogOutputInterface) HoornLogger {
 	if len(outputs) == 0 {
-		outputs = []output.HoornLogOutputInterface{output.DefaultHoornLogOutput{}}
+		outputs = []output.HoornLogOutputInterface{&output.DefaultHoornLogOutput{}}
 	}
 
-	return HoornLogger{
+	logger := HoornLogger{
 		minLevel:        minLevel,
 		outputs:         outputs,
 		hoornLogFactory: factory.HoornLogFactory{},
+		shutdownSignal:  shutdownSignal,
+		waitGroup:       wg,
 	}
+
+	go logger.ListenForShutdown()
+
+	return logger
 }
 
-func (hL HoornLogger) canOutput(level common.LogLevel) bool {
+func (hL *HoornLogger) canOutput(level common.LogLevel) bool {
 	return level >= hL.minLevel
 }
 
-func (hL HoornLogger) log(level common.LogLevel, message string, forceShow bool, separator string) {
+func (hL *HoornLogger) log(level common.LogLevel, message string, forceShow bool, separator string) {
 	if !hL.canOutput(level) && !forceShow {
 		return
 	}
@@ -44,26 +58,38 @@ func (hL HoornLogger) log(level common.LogLevel, message string, forceShow bool,
 	}
 }
 
-func (hL HoornLogger) SetMinLevel(level common.LogLevel) {
+func (hL *HoornLogger) ListenForShutdown() {
+	hL.waitGroup.Add(1)
+
+	<-hL.shutdownSignal
+
+	for _, outputMethod := range hL.outputs {
+		outputMethod.Save()
+	}
+
+	hL.waitGroup.Done()
+}
+
+func (hL *HoornLogger) SetMinLevel(level common.LogLevel) {
 	hL.minLevel = level
 }
 
-func (hL HoornLogger) Debug(message string, forceShow bool, separator string) {
+func (hL *HoornLogger) Debug(message string, forceShow bool, separator string) {
 	hL.log(common.DEBUG, message, forceShow, separator)
 }
 
-func (hL HoornLogger) Info(message string, forceShow bool, separator string) {
+func (hL *HoornLogger) Info(message string, forceShow bool, separator string) {
 	hL.log(common.INFO, message, forceShow, separator)
 }
 
-func (hL HoornLogger) Warn(message string, forceShow bool, separator string) {
+func (hL *HoornLogger) Warn(message string, forceShow bool, separator string) {
 	hL.log(common.WARNING, message, forceShow, separator)
 }
 
-func (hL HoornLogger) Error(message string, forceShow bool, separator string) {
+func (hL *HoornLogger) Error(message string, forceShow bool, separator string) {
 	hL.log(common.ERROR, message, forceShow, separator)
 }
 
-func (hL HoornLogger) Critical(message string, forceShow bool, separator string) {
+func (hL *HoornLogger) Critical(message string, forceShow bool, separator string) {
 	hL.log(common.CRITICAL, message, forceShow, separator)
 }

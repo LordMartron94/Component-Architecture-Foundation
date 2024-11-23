@@ -32,9 +32,8 @@ type Router struct {
 	messageHandlers    map[string]processors.MessageProcessorInterface
 }
 
-func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface) *Router {
+func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder coding.MessageCoderInterface, shutdownChan chan struct{}) *Router {
 	msgChan := make(chan transport.Message, 15)
-	shutdownChan := make(chan struct{})
 
 	server := transport.ComponentID{
 		Title:             shared.ServerName,
@@ -67,8 +66,6 @@ func NewRouter(logger *logging.HoornLogger, wg *sync.WaitGroup, messageCoder cod
 	}
 
 	shutdownListeners := make([]lifecycle_managing.ShutdownInterface, 0)
-
-	wg.Add(2)
 	shutdownListeners = append(shutdownListeners, &shutdownComponents, listener)
 
 	lifecycleManager := lifecycle_managing.LifeCycleManager{

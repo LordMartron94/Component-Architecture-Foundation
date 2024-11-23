@@ -32,7 +32,7 @@ func NewHoornLogColorFormatter() *HoornLogColorFormatter {
 	}
 }
 
-func (f HoornLogColorFormatter) Format(hoornLog common.HoornLog) string {
+func (f HoornLogColorFormatter) Format(hoornLog *common.HoornLog) string {
 	var logLevel = hoornLog.GetLogLevel()
 
 	color, found := f.colorDict[logLevel]

@@ -18,6 +18,8 @@ type FileHoornLogOutput struct {
 	maxLogsToKeep   int
 	createDirectory bool
 	useCombined     bool
+
+	logsToWrite []*common.HoornLog
 }
 
 func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
@@ -26,6 +28,7 @@ func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined b
 		maxLogsToKeep:   maxLogsToKeep,
 		createDirectory: true,
 		useCombined:     useCombined,
+		logsToWrite:     make([]*common.HoornLog, 0, 300),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -184,18 +187,26 @@ func (fhl *FileHoornLogOutput) writeLog(formattedLog string, separator string) {
 	}
 }
 
-func (fhl *FileHoornLogOutput) Output(hoornLog common.HoornLog) {
-	var formatter = formatting.HoornLogTextFormatter{}
-	formattedLog := formatter.Format(hoornLog)
-	fhl.writeLog(formattedLog, hoornLog.LogSeparator)
-
-	if fhl.useCombined {
-		fhl.HandleCombined(hoornLog)
-	}
+func (fhl *FileHoornLogOutput) Output(hoornLog *common.HoornLog) {
+	fhl.logsToWrite = append(fhl.logsToWrite, hoornLog)
 }
 
-func (fhl *FileHoornLogOutput) HandleCombined(hoornLog common.HoornLog) {
+func (fhl *FileHoornLogOutput) HandleCombined(hoornLog *common.HoornLog) {
 	var formatter = formatting.HoornLogTextFormatter{}
 	formattedLog := fmt.Sprintf("[%-30s] ", hoornLog.LogSeparator) + formatter.Format(hoornLog)
 	fhl.writeLog(formattedLog, "")
+}
+
+func (fhl *FileHoornLogOutput) Save() {
+	formatter := formatting.HoornLogTextFormatter{}
+	
+	for _, hoornLog := range fhl.logsToWrite {
+		formattedLog := formatter.Format(hoornLog)
+
+		fhl.writeLog(formattedLog, hoornLog.LogSeparator)
+
+		if fhl.useCombined {
+			fhl.HandleCombined(hoornLog)
+		}
+	}
 }

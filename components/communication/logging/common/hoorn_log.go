@@ -25,12 +25,12 @@ type HoornLog struct {
 	LogSeparator string
 }
 
-func NewHoornLog(logTime time.Time, logLevel LogLevel, logMessage string, formattedMessage string, logSeparator string) HoornLog {
+func NewHoornLog(logTime time.Time, logLevel LogLevel, logMessage string, formattedMessage string, logSeparator string) *HoornLog {
 	if len(logSeparator) > 30 {
 		log.Fatalln(fmt.Sprintf("Log separator exceeds maximum length of 15 characters, separator: %s", logSeparator))
 	}
 
-	return HoornLog{
+	return &HoornLog{
 		logTime:          logTime,
 		logLevel:         logLevel,
 		logMessage:       logMessage,
@@ -39,26 +39,26 @@ func NewHoornLog(logTime time.Time, logLevel LogLevel, logMessage string, format
 	}
 }
 
-func (log HoornLog) GetLogLevel() LogLevel {
+func (log *HoornLog) GetLogLevel() LogLevel {
 	return log.logLevel
 }
 
-func (log HoornLog) GetLogLevelString() string {
+func (log *HoornLog) GetLogLevelString() string {
 	return log.logLevel.StringifyLogLevel()
 }
 
-func (log HoornLog) GetLogTime() time.Time {
+func (log *HoornLog) GetLogTime() time.Time {
 	return log.logTime
 }
 
-func (log HoornLog) GetLogMessage() string {
+func (log *HoornLog) GetLogMessage() string {
 	return log.logMessage
 }
 
-func (log HoornLog) GetFormattedMessage() string {
+func (log *HoornLog) GetFormattedMessage() string {
 	return log.FormattedMessage
 }
 
-func (log HoornLog) GetLogSeparator() string {
+func (log *HoornLog) GetLogSeparator() string {
 	return log.LogSeparator
 }

@@ -28,12 +28,14 @@ func getLogDir(applicationName string) string {
 	return logDir
 }
 
-func getLogger(applicationName string) logging.HoornLogger {
+func getLogger(applicationName string, shutdownChan chan struct{}, wg *sync.WaitGroup) logging.HoornLogger {
 	logDir := getLogDir(applicationName) + "\\Communication_Layer\\"
 
 	return logging.NewHoornLogger(
 		common.DEBUG,
-		output.DefaultHoornLogOutput{},
+		shutdownChan,
+		wg,
+		&output.DefaultHoornLogOutput{},
 		output.NewFileHoornLogOutput(
 			logDir,
 			5,
@@ -51,7 +53,10 @@ func main() {
 
 	applicationName := applicationArgs[1]
 
-	logger := getLogger(applicationName)
+	var wg sync.WaitGroup
+	shutdownChan := make(chan struct{})
+
+	logger := getLogger(applicationName, shutdownChan, &wg)
 	logger.Info(fmt.Sprintf("Starting server '%s@%s'...", shared.ServerName, shared.ServerVersion), false, shared.MainComponentName)
 
 	go func() {
@@ -65,11 +70,9 @@ func main() {
 		}
 	}()
 
-	var wg sync.WaitGroup
-
 	coder := coding.JsonMessageCoder{Logger: &logger}
 
-	router := networking.NewRouter(&logger, &wg, &coder)
+	router := networking.NewRouter(&logger, &wg, &coder, shutdownChan)
 	router.Start()
 
 	wg.Wait()
