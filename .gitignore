@@ -10,3 +10,6 @@
 
 # Build
 /build
+
+# Performance
+/components/benchmarks/results/*.exe

@@ -113,8 +113,10 @@ def benchmark_command_2(command_handler, file_helper):
 			"-bench=.",
 			"-benchmem",
 			"-cpuprofile",
-			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.cpu').resolve()}\"",
-			f"-o=\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.exe').resolve()}\""
+			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.cpu.prof').resolve()}\"",
+			"-memprofile",
+			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.mem.prof').resolve()}\"",
+			f"-o=\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.exe').resolve()}\"",
 			f"> \"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.txt').resolve()}\""
 		]
 
@@ -122,13 +124,13 @@ def benchmark_command_2(command_handler, file_helper):
 			"tool",
 			"pprof",
 			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.exe').resolve()}\"",
-			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.cpu')}\""
+			f"\"{BENCHMARK_RESULTS_BASE.joinpath(f'{output_name}.cpu.prof')}\""
 		]
 
 		os.chdir(GO_MODULE_BASE)
 
 		await command_handler.execute_command_v2_async("go", commands, hide_console=False, keep_open=False)
-		command_handler.execute_command_v2("go", commands_2, shell=True, hide_console=False, keep_open=True)
+		await command_handler.execute_command_v2_async("go", commands_2, hide_console=False, keep_open=False)
 
 	asyncio.run(run_benchmark())
 
@@ -187,7 +189,7 @@ def run_pprof_command(command_handler, file_helper):
 		return run_pprof_command(command_handler, file_helper)
 
 	executable = exes[chosen_executable]
-	cpu_result = BENCHMARK_RESULTS_BASE.joinpath(f"{executable.stem}.cpu")
+	cpu_result = BENCHMARK_RESULTS_BASE.joinpath(f"{executable.stem}.cpu.prof")
 
 	commands = [
         "tool",
@@ -197,6 +199,33 @@ def run_pprof_command(command_handler, file_helper):
 	]
 
 	command_handler.execute_command_v2("go", commands, shell=True, hide_console=False, keep_open=True)
+
+def run_pprof_web_command(command_handler, file_helper):
+	exes: List[Path] = file_helper.get_children_paths(BENCHMARK_RESULTS_BASE, extension=".exe")
+	if len(exes) == 0:
+		print("No benchmark executables found in the benchmark results directory.")
+		return
+
+	for i, exe in enumerate(exes):
+		print(f"{i}. {exe.name}")
+
+	chosen_executable = int(input("Enter the number of the benchmark executable: "))
+	if chosen_executable < 0 or chosen_executable >= len(exes):
+		print("Invalid choice. Please try again.")
+		return run_pprof_command(command_handler, file_helper)
+
+	executable = exes[chosen_executable]
+	cpu_result = BENCHMARK_RESULTS_BASE.joinpath(f"{executable.stem}.cpu.prof")
+
+	commands = [
+		"tool",
+		"pprof",
+		"-http=\":8080\"",
+		f"\"{executable.resolve()}\"",
+		f"\"{cpu_result.resolve()}\""
+	]
+
+	command_handler.execute_command_v2("go", commands, hide_console=False, keep_open=True, shell=True)
 
 
 if __name__ == "__main__":
@@ -208,7 +237,8 @@ if __name__ == "__main__":
 	cli_interface.add_command(["benchmark", "bm"], action=benchmark_command, description="Starts the benchmarking.", arguments=[command_handler])
 	cli_interface.add_command(["benchmark-2", "bm-2"], action=benchmark_command_2, description="Starts the benchmarking suite.", arguments=[command_handler, file_handler])
 	cli_interface.add_command(["benchstat-compare", "bsc"], action=benchstat_compare_command, description="Compares two benchmark results.", arguments=[command_handler, file_handler])
-	cli_interface.add_command(["pprof"], action=run_pprof_command, description="Starts the pprof tool.", arguments=[command_handler, file_handler])
+	cli_interface.add_command(["pprof", "pp"], action=run_pprof_command, description="Starts the pprof tool.", arguments=[command_handler, file_handler])
+	cli_interface.add_command(["pprof-web", "pp-web"], action=run_pprof_web_command, description="Starts the pprof tool with web interface.", arguments=[command_handler, file_handler])
 
 	cli_interface.start_listen_loop()
 
