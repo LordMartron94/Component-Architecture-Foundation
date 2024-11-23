@@ -6,14 +6,14 @@ import (
 	"net"
 	"time"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/coding"
-	"github.com/component-architecture-foundation/networking/connectivity/communication"
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
-	"github.com/component-architecture-foundation/networking/message_handling"
-	"github.com/component-architecture-foundation/networking/scanning"
-	"github.com/component-architecture-foundation/networking/transport"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/coding"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/communication"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/message_handling"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/scanning"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 type DefaultConnectionHandler struct {
@@ -165,11 +165,24 @@ func (d *DefaultConnectionHandler) handleConnection(conn net.Conn) {
 	//d.Logger.Debug(fmt.Sprintf("Pushing data to channel: %s", decodedData.Payload), false, shared.NetworkingComponentName)
 	d.MessageChannel <- decodedData
 
-	componentID, _ := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
+	componentID, err := decodedData.GetComponentIDFromRegistrationMessage(d.Logger)
 
 	if componentID == nil {
 		d.Logger.Error("Failed to get component ID from message during registration; closing connection", false, shared.NetworkingComponentName)
-		d.sendRawResponse([]byte(shared.InvalidRequestResponsePayload), conn, *decodedData.UniqueID)
+
+		payload, err1 := transport.MessagePayloadFromBytes([]byte(shared.InvalidRequestResponsePayload))
+		payload.Args[0].Value = payload.Args[0].Value + fmt.Sprintf("; something went wrong with component ID extraction: %s", err)
+
+		payloadBytes, err2 := transport.MessagePayloadToBytes(payload)
+
+		if err1 != nil || err2 != nil {
+			d.Logger.Error(fmt.Sprintf("Failed to create message payload: '%s/%s'", err1.Error(), err2.Error()), false, shared.NetworkingComponentName)
+			time.Sleep(time.Second)
+			conn.Close()
+			return
+		}
+
+		d.sendRawResponse(payloadBytes, conn, *decodedData.UniqueID)
 		time.Sleep(time.Second)
 		conn.Close()
 		return

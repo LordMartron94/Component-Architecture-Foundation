@@ -3,17 +3,16 @@ package handlers
 import (
 	"sync"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/connectivity"
-	"github.com/component-architecture-foundation/networking/connectivity/communication"
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
-	"github.com/component-architecture-foundation/networking/transport"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/communication"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 type TCPHandler struct {
 	Logger               *logging.HoornLogger
-	MessageChannel       chan transport.Message
 	ConnectionHandler    connectivity.ConnectionHandlerInterface
 	CommunicationHandler communication.CommunicationHandlerInterface
 	WaitGroup            *sync.WaitGroup
@@ -21,10 +20,9 @@ type TCPHandler struct {
 	shutdownChan chan struct{}
 }
 
-func NewTCPHandler(logger *logging.HoornLogger, messageChannel chan transport.Message, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}, waitgroup *sync.WaitGroup) *TCPHandler {
+func NewTCPHandler(logger *logging.HoornLogger, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}, waitgroup *sync.WaitGroup) *TCPHandler {
 	return &TCPHandler{
 		Logger:               logger,
-		MessageChannel:       messageChannel,
 		ConnectionHandler:    handlerInterface,
 		CommunicationHandler: communicationHandlerInterface,
 		shutdownChan:         shutdownChan,

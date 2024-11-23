@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/component-architecture-foundation/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
 )
 
 type Peer struct {

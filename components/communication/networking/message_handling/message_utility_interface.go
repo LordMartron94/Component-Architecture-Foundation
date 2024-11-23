@@ -1,6 +1,6 @@
 package message_handling
 
-import "github.com/component-architecture-foundation/networking/transport"
+import "github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
 
 type MessageUtilityInterface interface {
 	// DecodeMessage decodes a bytes json message object to an actual transport.Message object.

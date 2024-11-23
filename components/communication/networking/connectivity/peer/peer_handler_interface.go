@@ -3,7 +3,7 @@ package peer
 import (
 	"net"
 
-	"github.com/component-architecture-foundation/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
 )
 
 type PeerHandlerInterface interface {

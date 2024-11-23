@@ -1,4 +1,4 @@
-module github.com/component-architecture-foundation
+module github.com/LordMartron94/Component-Architecture-Foundation/components/communication
 
 go 1.23
 

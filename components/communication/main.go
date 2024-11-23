@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/logging/common"
-	"github.com/component-architecture-foundation/logging/output"
-	"github.com/component-architecture-foundation/networking"
-	"github.com/component-architecture-foundation/networking/coding"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/output"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/coding"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 func getLogDir(applicationName string) string {

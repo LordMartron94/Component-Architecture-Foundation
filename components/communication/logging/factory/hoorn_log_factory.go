@@ -3,8 +3,8 @@ package factory
 import (
 	"time"
 
-	"github.com/component-architecture-foundation/logging/common"
-	"github.com/component-architecture-foundation/logging/formatting"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/formatting"
 )
 
 type HoornLogFactory struct {

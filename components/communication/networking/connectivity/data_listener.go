@@ -8,12 +8,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/component-architecture-foundation/logging"
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
-	"github.com/component-architecture-foundation/networking/message_handling"
-	"github.com/component-architecture-foundation/networking/scanning"
-	"github.com/component-architecture-foundation/networking/transport"
-	"github.com/component-architecture-foundation/shared"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/message_handling"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/scanning"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/shared"
 )
 
 type DataListener struct {

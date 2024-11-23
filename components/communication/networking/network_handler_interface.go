@@ -1,8 +1,8 @@
 package networking
 
 import (
-	"github.com/component-architecture-foundation/networking/connectivity/peer"
-	"github.com/component-architecture-foundation/networking/transport"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/connectivity/peer"
+	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
 )
 
 type NetworkHandlerInterface interface {

@@ -1,6 +1,6 @@
 package coding
 
-import "github.com/component-architecture-foundation/networking/transport"
+import "github.com/LordMartron94/Component-Architecture-Foundation/components/communication/networking/transport"
 
 type MessageCoderInterface interface {
 	// Decode decodes a bytes json message object to an actual transport.Message object.
