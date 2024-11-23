@@ -1,0 +1,23 @@
+goos: windows
+goarch: amd64
+cpu: 12th Gen Intel(R) Core(TM) i7-12650H
+                                 │       O        │                 N_1                  │                  N_2                  │
+                                 │     sec/op     │    sec/op     vs base                │    sec/op      vs base                │
+LoggingSuite/Log_Debug_1x-16        272.35µ ± 60%   10.29µ ± 23%  -96.22% (p=0.000 n=10)    21.00µ ± 39%  -92.29% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     27449.7µ ±  5%   997.7µ ± 17%  -96.37% (p=0.000 n=10)   2214.9µ ± 10%  -91.93% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   2747.73m ±  7%   96.35m ±  7%  -96.49% (p=0.000 n=10)   258.95m ± 16%  -90.58% (p=0.000 n=10)
+geomean                              27.39m         996.3µ        -96.36%                   2.292m        -91.63%
+
+                                 │      O       │                 N_1                  │                 N_2                  │
+                                 │     B/op     │     B/op      vs base                │     B/op      vs base                │
+LoggingSuite/Log_Debug_1x-16       4.698Ki ± 0%   1.247Ki ± 3%  -73.46% (p=0.000 n=10)   2.169Ki ± 1%  -53.83% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     469.8Ki ± 0%   124.4Ki ± 1%  -73.51% (p=0.000 n=10)   217.5Ki ± 1%  -53.69% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   45.87Mi ± 0%   12.10Mi ± 1%  -73.62% (p=0.000 n=10)   21.24Mi ± 0%  -53.69% (p=0.000 n=10)
+geomean                            469.8Ki        124.3Ki       -73.53%                  217.3Ki       -53.74%
+
+                                 │      O      │                 N_1                 │                 N_2                 │
+                                 │  allocs/op  │  allocs/op   vs base                │  allocs/op   vs base                │
+LoggingSuite/Log_Debug_1x-16        45.00 ± 0%    17.00 ± 0%  -62.22% (p=0.000 n=10)    39.00 ± 0%  -13.33% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     4.502k ± 0%   1.745k ± 0%  -61.24% (p=0.000 n=10)   3.900k ± 0%  -13.37% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   450.2k ± 0%   173.9k ± 0%  -61.36% (p=0.000 n=10)   390.0k ± 0%  -13.36% (p=0.000 n=10)
+geomean                            4.501k        1.728k       -61.61%                  3.900k       -13.36%

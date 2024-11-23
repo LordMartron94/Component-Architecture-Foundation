@@ -172,18 +172,22 @@ func getFileChildrenPaths(directory string, extension string) ([]string, error) 
 	return files, nil
 }
 
-func (fhl *FileHoornLogOutput) writeLog(formattedLog string, separator string) {
-	var logDirectory = fhl.getPathToLogTo(separator)
+func (fhl *FileHoornLogOutput) writeLogs(logsMap map[string][]string) {
+	for logSeparator, logs := range logsMap {
+		var logDirectory = fhl.getPathToLogTo(logSeparator)
 
-	f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
+		f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	defer f.Close()
+		for _, formattedLog := range logs {
+			if _, err := f.WriteString(formattedLog + "\n"); err != nil {
+				log.Fatal(err)
+			}
+		}
 
-	if _, err := f.WriteString(formattedLog + "\n"); err != nil {
-		log.Fatal(err)
+		f.Close()
 	}
 }
 
@@ -191,24 +195,22 @@ func (fhl *FileHoornLogOutput) Output(hoornLog *common.HoornLog) {
 	fhl.logsToWrite = append(fhl.logsToWrite, hoornLog)
 }
 
-func (fhl *FileHoornLogOutput) HandleCombined(hoornLog *common.HoornLog) {
-	var formatter = formatting.HoornLogTextFormatter{}
-	formattedLog := fmt.Sprintf("[%-30s] ", hoornLog.LogSeparator) + formatter.Format(hoornLog)
-	fhl.writeLog(formattedLog, "")
-}
-
 func (fhl *FileHoornLogOutput) Save() {
 	formatter := formatting.HoornLogTextFormatter{}
 
+	logsMap := make(map[string][]string)
+
 	for _, hoornLog := range fhl.logsToWrite {
 		formattedLog := formatter.Format(hoornLog)
-
-		fhl.writeLog(formattedLog, hoornLog.LogSeparator)
+		logsMap[hoornLog.LogSeparator] = append(logsMap[hoornLog.LogSeparator], formattedLog)
 
 		if fhl.useCombined {
-			fhl.HandleCombined(hoornLog)
+			formattedLog = fmt.Sprintf("[%-30s] ", hoornLog.LogSeparator) + formatter.Format(hoornLog)
+			logsMap[""] = append(logsMap[""], formattedLog)
 		}
 	}
-	
+
+	fhl.writeLogs(logsMap)
+
 	fhl.logsToWrite = make([]*common.HoornLog, 0, 300)
 }

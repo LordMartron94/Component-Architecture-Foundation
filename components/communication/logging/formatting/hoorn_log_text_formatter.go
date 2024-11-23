@@ -27,7 +27,9 @@ func getLongestLogLevelLength() int {
 func (formatter HoornLogTextFormatter) Format(log *common.HoornLog) string {
 	var logLevel string = log.GetLogLevelString()
 
-	var formattedMessage string = "[" + log.GetLogTime().Format(time.RFC3339Nano) + "] " + logLevel + " : " + log.GetLogMessage()
+	logTime := log.GetLogTime().Format(time.RFC3339Nano)
+
+	var formattedMessage string = "[" + fmt.Sprintf("%-*s", 35, logTime) + "] " + logLevel + " : " + log.GetLogMessage()
 	formattedMessage = strings.Replace(formattedMessage, logLevel, fmt.Sprintf("%-*s", getLongestLogLevelLength(), logLevel), -1)
 
 	return formattedMessage
