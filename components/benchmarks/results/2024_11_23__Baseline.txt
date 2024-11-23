@@ -1,0 +1,35 @@
+goos: windows
+goarch: amd64
+cpu: 12th Gen Intel(R) Core(TM) i7-12650H
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    2575	    423538 ns/op	    4820 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    5266	    707860 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4490	    249866 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4908	    261506 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4234	    283145 ns/op	    4809 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4322	    290627 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    3768	    281976 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4308	    293696 ns/op	    4810 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    4430	    320344 ns/op	    4811 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_1x-16         	    3805	    558235 ns/op	    4813 B/op	      45 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      49	  24987676 ns/op	  481007 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      39	  27325474 ns/op	  480936 B/op	    4501 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      45	  25584833 ns/op	  481451 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      44	  28408120 ns/op	  480996 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      40	  30336962 ns/op	  480989 B/op	    4501 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      33	  51248927 ns/op	  481061 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      34	  36899050 ns/op	  481366 B/op	    4503 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      31	  32337855 ns/op	  481036 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      42	  34427186 ns/op	  481043 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_100x-16       	      39	  34073038 ns/op	  480991 B/op	    4502 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3855408700 ns/op	48107616 B/op	  450201 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	2860580400 ns/op	48098352 B/op	  450219 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3983003000 ns/op	48135368 B/op	  450240 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3115519100 ns/op	48101896 B/op	  450206 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3512741100 ns/op	48100616 B/op	  450223 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3031146500 ns/op	48102664 B/op	  450189 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	2910532700 ns/op	48109768 B/op	  450221 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3065375500 ns/op	48098120 B/op	  450208 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	2925282500 ns/op	48103400 B/op	  450194 allocs/op
+BenchmarkLoggingSuite/Log_Debug_10000x-16     	       1	3010362600 ns/op	48098264 B/op	  450193 allocs/op
+PASS
+ok  	command-line-arguments	65.196s

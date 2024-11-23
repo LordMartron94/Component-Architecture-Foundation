@@ -172,6 +172,33 @@ def benchstat_compare_command(command_handler, file_helper):
 
 	asyncio.run(run_benchstat_compare())
 
+def run_pprof_command(command_handler, file_helper):
+	exes: List[Path] = file_helper.get_children_paths(BENCHMARK_RESULTS_BASE, extension=".exe")
+	if len(exes) == 0:
+		print("No benchmark executables found in the benchmark results directory.")
+		return
+
+	for i, exe in enumerate(exes):
+		print(f"{i}. {exe.name}")
+
+	chosen_executable = int(input("Enter the number of the benchmark executable: "))
+	if chosen_executable < 0 or chosen_executable >= len(exes):
+		print("Invalid choice. Please try again.")
+		return run_pprof_command(command_handler, file_helper)
+
+	executable = exes[chosen_executable]
+	cpu_result = BENCHMARK_RESULTS_BASE.joinpath(f"{executable.stem}.cpu")
+
+	commands = [
+        "tool",
+        "pprof",
+        f"\"{executable.resolve()}\"",
+	    f"\"{cpu_result.resolve()}\""
+	]
+
+	command_handler.execute_command_v2("go", commands, shell=True, hide_console=False, keep_open=True)
+
+
 if __name__ == "__main__":
 	logger = HoornLogger(min_level=LogType.DEBUG, outputs=[DefaultHoornLogOutput()])
 	command_handler = command_handling_module.CommandHelper(logger)
@@ -181,6 +208,7 @@ if __name__ == "__main__":
 	cli_interface.add_command(["benchmark", "bm"], action=benchmark_command, description="Starts the benchmarking.", arguments=[command_handler])
 	cli_interface.add_command(["benchmark-2", "bm-2"], action=benchmark_command_2, description="Starts the benchmarking suite.", arguments=[command_handler, file_handler])
 	cli_interface.add_command(["benchstat-compare", "bsc"], action=benchstat_compare_command, description="Compares two benchmark results.", arguments=[command_handler, file_handler])
+	cli_interface.add_command(["pprof"], action=run_pprof_command, description="Starts the pprof tool.", arguments=[command_handler, file_handler])
 
 	cli_interface.start_listen_loop()
 
