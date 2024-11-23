@@ -2,6 +2,7 @@ package logging
 
 import (
 	"sync"
+	"time"
 
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/factory"
@@ -39,6 +40,19 @@ func NewHoornLogger(minLevel common.LogLevel, shutdownSignal chan struct{}, wg *
 
 	go logger.ListenForShutdown()
 
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				logger.save()
+			case <-shutdownSignal:
+				return
+			}
+		}
+	}()
+
 	return logger
 }
 
@@ -63,11 +77,15 @@ func (hL *HoornLogger) ListenForShutdown() {
 
 	<-hL.shutdownSignal
 
+	hL.save()
+
+	hL.waitGroup.Done()
+}
+
+func (hL *HoornLogger) save() {
 	for _, outputMethod := range hL.outputs {
 		outputMethod.Save()
 	}
-
-	hL.waitGroup.Done()
 }
 
 func (hL *HoornLogger) SetMinLevel(level common.LogLevel) {

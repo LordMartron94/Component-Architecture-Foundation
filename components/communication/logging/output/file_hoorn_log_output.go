@@ -199,7 +199,7 @@ func (fhl *FileHoornLogOutput) HandleCombined(hoornLog *common.HoornLog) {
 
 func (fhl *FileHoornLogOutput) Save() {
 	formatter := formatting.HoornLogTextFormatter{}
-	
+
 	for _, hoornLog := range fhl.logsToWrite {
 		formattedLog := formatter.Format(hoornLog)
 
