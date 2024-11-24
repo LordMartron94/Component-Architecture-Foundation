@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging"
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
@@ -21,12 +22,14 @@ func getLogDir(applicationName string) string {
 	return logDir
 }
 
-func GetLogger(applicationName string) logging.HoornLogger {
+func GetLogger(applicationName string, shutdownSignal chan struct{}, wg *sync.WaitGroup) logging.HoornLogger {
 	logDir := getLogDir(applicationName) + "\\Communication_Layer\\"
 
 	return logging.NewHoornLogger(
 		common.DEBUG,
-		output.DefaultHoornLogOutput{},
+		shutdownSignal,
+		wg,
+		&output.DefaultHoornLogOutput{},
 		output.NewFileHoornLogOutput(
 			logDir,
 			5,

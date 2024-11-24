@@ -32,6 +32,8 @@ func (l *LifeCycleManager) ListenForTermination() {
 }
 
 func (l *LifeCycleManager) ShutdownServer() {
+	l.WaitGroup.Add(1)
+
 	for _, listener := range l.ShutdownListeners {
 		err := listener.Shutdown()
 		if err != nil {

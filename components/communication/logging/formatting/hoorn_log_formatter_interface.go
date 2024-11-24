@@ -5,5 +5,5 @@ import (
 )
 
 type HoornLogFormatterInterface interface {
-	Format(hoornLog common.HoornLog) string
+	Format(hoornLog *common.HoornLog) []byte
 }

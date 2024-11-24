@@ -21,6 +21,8 @@ type TCPHandler struct {
 }
 
 func NewTCPHandler(logger *logging.HoornLogger, handlerInterface connectivity.ConnectionHandlerInterface, communicationHandlerInterface communication.CommunicationHandlerInterface, shutdownChan chan struct{}, waitgroup *sync.WaitGroup) *TCPHandler {
+	waitgroup.Add(1)
+
 	return &TCPHandler{
 		Logger:               logger,
 		ConnectionHandler:    handlerInterface,

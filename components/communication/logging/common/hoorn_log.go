@@ -14,51 +14,55 @@ type HoornLog struct {
 	logLevel LogLevel
 
 	// logMessage is the raw log message.
-	logMessage string
+	logMessage []byte
 
-	// FormattedMessage is a pre-formatted string for Output. Optional.
-	FormattedMessage string
+	// FormattedMessage is a pre-formatted message for Output. Optional.
+	FormattedMessage []byte
 
 	// LogSeparator is a string representing the distinction between different types of logs.
 	// Different types of log outputs might use this differently.
 	// Max 30 characters for proper formatting.
-	LogSeparator string
+	LogSeparator []byte
 }
 
-func NewHoornLog(logTime time.Time, logLevel LogLevel, logMessage string, formattedMessage string, logSeparator string) HoornLog {
+func NewHoornLog(logTime time.Time, logLevel LogLevel, logMessage string, formattedMessage string, logSeparator string) *HoornLog {
 	if len(logSeparator) > 30 {
 		log.Fatalln(fmt.Sprintf("Log separator exceeds maximum length of 15 characters, separator: %s", logSeparator))
 	}
 
-	return HoornLog{
+	logMessageBytes := []byte(logMessage)
+	formattedMessageBytes := []byte(formattedMessage)
+	logSeparatorBytes := []byte(logSeparator)
+
+	return &HoornLog{
 		logTime:          logTime,
 		logLevel:         logLevel,
-		logMessage:       logMessage,
-		FormattedMessage: formattedMessage,
-		LogSeparator:     logSeparator,
+		logMessage:       logMessageBytes,
+		FormattedMessage: formattedMessageBytes,
+		LogSeparator:     logSeparatorBytes,
 	}
 }
 
-func (log HoornLog) GetLogLevel() LogLevel {
+func (log *HoornLog) GetLogLevel() LogLevel {
 	return log.logLevel
 }
 
-func (log HoornLog) GetLogLevelString() string {
+func (log *HoornLog) GetLogLevelString() string {
 	return log.logLevel.StringifyLogLevel()
 }
 
-func (log HoornLog) GetLogTime() time.Time {
+func (log *HoornLog) GetLogTime() time.Time {
 	return log.logTime
 }
 
-func (log HoornLog) GetLogMessage() string {
+func (log *HoornLog) GetLogMessage() []byte {
 	return log.logMessage
 }
 
-func (log HoornLog) GetFormattedMessage() string {
+func (log *HoornLog) GetFormattedMessage() []byte {
 	return log.FormattedMessage
 }
 
-func (log HoornLog) GetLogSeparator() string {
+func (log *HoornLog) GetLogSeparator() []byte {
 	return log.LogSeparator
 }
