@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -19,7 +20,8 @@ type FileHoornLogOutput struct {
 	createDirectory bool
 	useCombined     bool
 
-	logsToWrite []*common.HoornLog
+	logsToWrite        []*common.HoornLog
+	maxSeparatorLength int
 }
 
 func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
@@ -42,6 +44,7 @@ func NewFileHoornLogOutputWithoutCreateDir(logDirectory string, maxLogsToKeep in
 		maxLogsToKeep:   maxLogsToKeep,
 		createDirectory: false,
 		useCombined:     useCombined,
+		logsToWrite:     make([]*common.HoornLog, 0, 300),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -146,11 +149,11 @@ func (fhl *FileHoornLogOutput) incrementLogs() error {
 	return nil
 }
 
-func (fhl *FileHoornLogOutput) getPathToLogTo(logSeparator string) string {
+func (fhl *FileHoornLogOutput) getPathToLogTo(logSeparator []byte) string {
 	var directory = fhl.logDirectory
 
-	if logSeparator != "" {
-		directory = filepath.Join(fhl.logDirectory, logSeparator)
+	if len(logSeparator) > 0 {
+		directory = filepath.Join(fhl.logDirectory, string(logSeparator))
 	}
 
 	fhl.validateDirectory(directory)
@@ -172,22 +175,26 @@ func getFileChildrenPaths(directory string, extension string) ([]string, error) 
 	return files, nil
 }
 
-func (fhl *FileHoornLogOutput) writeLogs(logsMap map[string][]string) {
-	for logSeparator, logs := range logsMap {
-		var logDirectory = fhl.getPathToLogTo(logSeparator)
+func (fhl *FileHoornLogOutput) writeLogs(separators [][]byte, messages [][][]byte) {
+	for i, separator := range separators {
+		logsAssociatedWithSeparator := messages[i]
 
-		f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
+		for _, msg := range logsAssociatedWithSeparator {
+			var logDirectory = fhl.getPathToLogTo(separator)
 
-		for _, formattedLog := range logs {
-			if _, err := f.WriteString(formattedLog + "\n"); err != nil {
+			f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
 				log.Fatal(err)
 			}
-		}
 
-		f.Close()
+			formatted := append(msg, []byte("\n")...)
+
+			if _, err := f.Write(formatted); err != nil {
+				log.Fatal(err)
+			}
+
+			f.Close()
+		}
 	}
 }
 
@@ -195,22 +202,54 @@ func (fhl *FileHoornLogOutput) Output(hoornLog *common.HoornLog) {
 	fhl.logsToWrite = append(fhl.logsToWrite, hoornLog)
 }
 
-func (fhl *FileHoornLogOutput) Save() {
-	formatter := formatting.NewHoornLogTextFormatter()
-
-	logsMap := make(map[string][]string)
-
-	for _, hoornLog := range fhl.logsToWrite {
-		formattedLog := formatter.Format(hoornLog)
-		logsMap[hoornLog.LogSeparator] = append(logsMap[hoornLog.LogSeparator], formattedLog)
-
-		if fhl.useCombined {
-			formattedLog = fmt.Sprintf("[%-30s] ", hoornLog.LogSeparator) + formatter.Format(hoornLog)
-			logsMap[""] = append(logsMap[""], formattedLog)
+func alternativeContains(container [][]byte, search []byte) bool {
+	for _, element := range container {
+		if bytes.Equal(element, search) {
+			return true
 		}
 	}
 
-	fhl.writeLogs(logsMap)
+	return false
+}
+
+func (fhl *FileHoornLogOutput) Save() {
+	textFormatter := formatting.NewHoornLogTextFormatter()
+	combinedTextFormatter := formatting.NewHoornLogCombinedTextFormatter(*textFormatter)
+
+	separators := make([][]byte, 0, 20)
+	messages := make([][][]byte, 0, 20)
+
+	separators = append(separators, []byte(""))
+	indexOfCombinedSeparator := 0
+
+	for _, hoornLog := range fhl.logsToWrite {
+		formattedLog := textFormatter.Format(hoornLog)
+
+		if !alternativeContains(separators, hoornLog.LogSeparator) {
+			separators = append(separators, hoornLog.LogSeparator)
+		}
+
+		indexOfSeparator := sort.Search(len(separators), func(i int) bool { return bytes.Equal(separators[i], hoornLog.LogSeparator) })
+
+		if indexOfSeparator >= len(messages) {
+			newMessages := make([][][]byte, indexOfSeparator+1)
+			copy(newMessages, messages)
+			messages = newMessages
+		}
+
+		if messages[indexOfSeparator] == nil {
+			messages[indexOfSeparator] = make([][]byte, 0, 10)
+		}
+
+		messages[indexOfSeparator] = append(messages[indexOfSeparator], formattedLog)
+
+		if fhl.useCombined {
+			formattedLog = combinedTextFormatter.Format(hoornLog)
+			messages[indexOfCombinedSeparator] = append(messages[indexOfCombinedSeparator], formattedLog)
+		}
+	}
+
+	fhl.writeLogs(separators, messages)
 
 	fhl.logsToWrite = make([]*common.HoornLog, 0, 300)
 }

@@ -2,7 +2,6 @@ package formatting
 
 import (
 	"bytes"
-	"fmt"
 	"time"
 
 	"github.com/LordMartron94/Component-Architecture-Foundation/components/communication/logging/common"
@@ -14,21 +13,8 @@ type HoornLogTextFormatter struct {
 
 func NewHoornLogTextFormatter() *HoornLogTextFormatter {
 	return &HoornLogTextFormatter{
-		longestLogLevelLength: getLongestLogLevelLength(),
+		longestLogLevelLength: common.GetLongestLogLevelLength(),
 	}
-}
-
-func getLongestLogLevelLength() int {
-	var logLevels []common.LogLevel = common.GetAllLogLevels()
-
-	var longestLogLevelLength int = 0
-	for _, logLevel := range logLevels {
-		if len(logLevel.StringifyLogLevel()) > longestLogLevelLength {
-			longestLogLevelLength = len(logLevel.StringifyLogLevel())
-		}
-	}
-
-	return longestLogLevelLength
 }
 
 func (formatter *HoornLogTextFormatter) formatLogTime(log *common.HoornLog) string {
@@ -45,7 +31,20 @@ func (formatter *HoornLogTextFormatter) formatLogTime(log *common.HoornLog) stri
 	return buffer.String()
 }
 
-func (formatter *HoornLogTextFormatter) Format(log *common.HoornLog) string {
+func (formatter *HoornLogTextFormatter) formatLogLevel(logLevel string) string {
+	maxLen := formatter.longestLogLevelLength
+	var buffer bytes.Buffer
+	buffer.Grow(maxLen)
+
+	buffer.WriteString(logLevel)
+	diff := maxLen - len(logLevel)
+
+	buffer.Write(bytes.Repeat([]byte{' '}, diff))
+
+	return buffer.String()
+}
+
+func (formatter *HoornLogTextFormatter) Format(log *common.HoornLog) []byte {
 	var buffer bytes.Buffer
 
 	logLevel := log.GetLogLevelString()
@@ -55,10 +54,16 @@ func (formatter *HoornLogTextFormatter) Format(log *common.HoornLog) string {
 	buffer.WriteString(logTime)
 	buffer.WriteString("] ")
 
-	buffer.WriteString(fmt.Sprintf("%-*s", formatter.longestLogLevelLength, logLevel))
+	buffer.WriteByte('[')
+	buffer.WriteString(formatter.formatLogLevel(logLevel))
+	buffer.WriteString("] ")
 
 	buffer.WriteString(" : ")
-	buffer.WriteString(log.GetLogMessage())
 
-	return buffer.String()
+	message := log.GetLogMessage()
+	for _, msgByte := range message {
+		buffer.WriteByte(msgByte)
+	}
+
+	return buffer.Bytes()
 }

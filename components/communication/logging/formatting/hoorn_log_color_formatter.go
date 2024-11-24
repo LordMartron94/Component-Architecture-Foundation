@@ -32,7 +32,7 @@ func NewHoornLogColorFormatter() *HoornLogColorFormatter {
 	}
 }
 
-func (f HoornLogColorFormatter) Format(hoornLog *common.HoornLog) string {
+func (f HoornLogColorFormatter) Format(hoornLog *common.HoornLog) []byte {
 	var logLevel = hoornLog.GetLogLevel()
 
 	color, found := f.colorDict[logLevel]
@@ -41,14 +41,14 @@ func (f HoornLogColorFormatter) Format(hoornLog *common.HoornLog) string {
 	}
 
 	var textColorHex = color.Text
-	var backgroundColorHex *string = color.Background
+	var backgroundColorHex = color.Background
 
-	var colorizedString string
+	var colorizedString []byte
 	if backgroundColorHex != nil {
 		colorizedString = f.colorHelper.ColorizeString(hoornLog.GetFormattedMessage(), textColorHex, *backgroundColorHex)
 	} else {
 		colorizedString = f.colorHelper.ColorizeString(hoornLog.GetFormattedMessage(), textColorHex, "")
 	}
 
-	return colorizedString + "\x1b[0m"
+	return append(colorizedString, []byte("\x1b[0m")...)
 }
