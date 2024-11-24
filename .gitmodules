@@ -1,0 +1,3 @@
+[submodule "CLI-Bench"]
+	path = components/benchmarking
+	url = https://github.com/LordMartron94/CLI-Bench
