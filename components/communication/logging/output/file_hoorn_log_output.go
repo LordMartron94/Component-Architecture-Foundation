@@ -20,17 +20,19 @@ type FileHoornLogOutput struct {
 	createDirectory bool
 	useCombined     bool
 
-	logsToWrite        []*common.HoornLog
-	maxSeparatorLength int
+	logsToWrite []*common.HoornLog
+
+	validatedDirectories map[string]bool
 }
 
 func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
 	var fileHoornLogOutput = &FileHoornLogOutput{
-		logDirectory:    filepath.Clean(logDirectory),
-		maxLogsToKeep:   maxLogsToKeep,
-		createDirectory: true,
-		useCombined:     useCombined,
-		logsToWrite:     make([]*common.HoornLog, 0, 300),
+		logDirectory:         filepath.Clean(logDirectory),
+		maxLogsToKeep:        maxLogsToKeep,
+		createDirectory:      true,
+		useCombined:          useCombined,
+		logsToWrite:          make([]*common.HoornLog, 0, 300),
+		validatedDirectories: make(map[string]bool, 30),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -40,11 +42,12 @@ func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined b
 
 func NewFileHoornLogOutputWithoutCreateDir(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
 	var fileHoornLogOutput = &FileHoornLogOutput{
-		logDirectory:    filepath.Clean(logDirectory),
-		maxLogsToKeep:   maxLogsToKeep,
-		createDirectory: false,
-		useCombined:     useCombined,
-		logsToWrite:     make([]*common.HoornLog, 0, 300),
+		logDirectory:         filepath.Clean(logDirectory),
+		maxLogsToKeep:        maxLogsToKeep,
+		createDirectory:      false,
+		useCombined:          useCombined,
+		logsToWrite:          make([]*common.HoornLog, 0, 300),
+		validatedDirectories: make(map[string]bool, 30),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -58,6 +61,10 @@ func (fhl *FileHoornLogOutput) initialize() {
 }
 
 func (fhl *FileHoornLogOutput) validateDirectory(directory string) error {
+	if fhl.validatedDirectories[directory] {
+		return nil
+	}
+
 	_, err := os.Stat(directory)
 	if os.IsNotExist(err) {
 		if fhl.createDirectory {
@@ -65,10 +72,14 @@ func (fhl *FileHoornLogOutput) validateDirectory(directory string) error {
 			if errDir != nil {
 				return errDir
 			}
+
+			fhl.validatedDirectories[directory] = true
 			return nil
 		}
 		return fmt.Errorf("log directory %v does not exist", directory)
 	}
+
+	fhl.validatedDirectories[directory] = true
 	return nil
 }
 
@@ -150,7 +161,7 @@ func (fhl *FileHoornLogOutput) incrementLogs() error {
 }
 
 func (fhl *FileHoornLogOutput) getPathToLogTo(logSeparator []byte) string {
-	var directory = fhl.logDirectory
+	directory := fhl.logDirectory
 
 	if len(logSeparator) > 0 {
 		directory = filepath.Join(fhl.logDirectory, string(logSeparator))
@@ -177,11 +188,10 @@ func getFileChildrenPaths(directory string, extension string) ([]string, error) 
 
 func (fhl *FileHoornLogOutput) writeLogs(separators [][]byte, messages [][][]byte) {
 	for i, separator := range separators {
+		var logDirectory = fhl.getPathToLogTo(separator)
 		logsAssociatedWithSeparator := messages[i]
 
 		for _, msg := range logsAssociatedWithSeparator {
-			var logDirectory = fhl.getPathToLogTo(separator)
-
 			f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				log.Fatal(err)
