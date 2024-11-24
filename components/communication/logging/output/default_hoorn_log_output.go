@@ -9,6 +9,10 @@ import (
 type DefaultHoornLogOutput struct {
 }
 
-func (o DefaultHoornLogOutput) Output(log common.HoornLog) {
+func (o *DefaultHoornLogOutput) Output(log *common.HoornLog) {
 	fmt.Println(fmt.Sprintf("[%-30s] %s", log.LogSeparator, log.GetFormattedMessage()))
+}
+
+func (o *DefaultHoornLogOutput) Save() {
+	// Nothing, we don't need to save anything.
 }

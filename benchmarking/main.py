@@ -149,24 +149,28 @@ def benchstat_compare_command(command_handler, file_helper):
 		for i, result in enumerate(results):
 			print(f"{i}. {result.name}")
 
-		choice_1 = int(input("Enter the number of the first benchmark result: "))
-		choice_2 = int(input("Enter the number of the second benchmark result: "))
+		choices: List[int] = list(map(int, input("Enter the numbers of the benchmark results to compare (separated by spaces): ").split()))
 
-		if choice_1 < 0 or choice_1 >= len(results) or choice_2 < 0 or choice_2 >= len(results):
-			print("Invalid choice. Please try again.")
-			return benchstat_compare_command(command_handler, file_helper)
+		if len(choices) < 2:
+			print("Please choose at least two benchmark results to compare.")
+			return
 
-		result_1 = results[choice_1]
-		result_2 = results[choice_2]
+		for i in range(len(choices)):
+			if choices[i] < 0 or choices[i] >= len(results):
+				print(f"Invalid choice for result {i+1}. Please try again.")
+				return
 
-		with open(interpreted_result_path.joinpath(f"{result_1.stem}-{result_2.stem}.txt"), "w+") as tmpfile:
+		results: List[Path] = [results[i] for i in choices]
+
+		with open(interpreted_result_path.joinpath(f"{results[0].stem}-{results[-1].stem}.txt"), "w+") as tmpfile:
 			temp_file_path = tmpfile.name
 
-		command = [
-	        f"O=\"{result_1.resolve()}\"",
-	        f"N=\"{result_2.resolve()}\"",
-			f"> \"{temp_file_path}\""
-		]
+		command = [f"O=\"{results[0].resolve()}\""]
+
+		for i in range(1, len(results)):
+			command.append(f"N_{i}=\"{results[i].resolve()}\"")
+
+		command.append(f"> \"{temp_file_path}\"")
 
 		await command_handler.execute_command_v2_async("benchstat", command, hide_console=False, keep_open=False)
 

@@ -1,0 +1,23 @@
+goos: windows
+goarch: amd64
+cpu: 12th Gen Intel(R) Core(TM) i7-12650H
+                                 │      O       │                 N_1                  │
+                                 │    sec/op    │    sec/op     vs base                │
+LoggingSuite/Log_Debug_1x-16       18.94µ ± 29%   11.57µ ± 21%  -38.88% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     2.406m ± 10%   1.108m ±  8%  -53.95% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   175.6m ± 12%   105.7m ± 12%  -39.83% (p=0.000 n=10)
+geomean                            2.000m         1.107m        -44.68%
+
+                                 │      O       │                 N_1                  │
+                                 │     B/op     │     B/op      vs base                │
+LoggingSuite/Log_Debug_1x-16       2.705Ki ± 1%   3.656Ki ± 1%  +35.14% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     271.6Ki ± 1%   365.3Ki ± 0%  +34.48% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   26.58Mi ± 1%   35.69Mi ± 0%  +34.28% (p=0.000 n=10)
+geomean                            271.4Ki        365.4Ki       +34.64%
+
+                                 │      O      │                N_1                 │
+                                 │  allocs/op  │  allocs/op   vs base               │
+LoggingSuite/Log_Debug_1x-16        43.00 ± 0%    46.00 ± 0%  +6.98% (p=0.000 n=10)
+LoggingSuite/Log_Debug_100x-16     4.300k ± 0%   4.600k ± 0%  +6.98% (p=0.000 n=10)
+LoggingSuite/Log_Debug_10000x-16   430.0k ± 0%   460.0k ± 0%  +6.97% (p=0.000 n=10)
+geomean                            4.300k        4.600k       +6.98%

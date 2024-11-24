@@ -10,11 +10,11 @@ import (
 type HoornLogFactory struct {
 }
 
-func (factory HoornLogFactory) CreateHoornLog(level common.LogLevel, message string, logSeparator string) common.HoornLog {
+func (factory HoornLogFactory) CreateHoornLog(level common.LogLevel, message string, logSeparator string) *common.HoornLog {
 	var currentTime time.Time = time.Now()
 
 	var formatters []formatting.HoornLogFormatterInterface = []formatting.HoornLogFormatterInterface{
-		formatting.HoornLogTextFormatter{},
+		formatting.NewHoornLogTextFormatter(),
 		formatting.NewHoornLogColorFormatter(),
 	}
 

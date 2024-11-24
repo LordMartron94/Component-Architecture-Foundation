@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -18,14 +19,20 @@ type FileHoornLogOutput struct {
 	maxLogsToKeep   int
 	createDirectory bool
 	useCombined     bool
+
+	logsToWrite []*common.HoornLog
+
+	validatedDirectories map[string]bool
 }
 
 func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
 	var fileHoornLogOutput = &FileHoornLogOutput{
-		logDirectory:    filepath.Clean(logDirectory),
-		maxLogsToKeep:   maxLogsToKeep,
-		createDirectory: true,
-		useCombined:     useCombined,
+		logDirectory:         filepath.Clean(logDirectory),
+		maxLogsToKeep:        maxLogsToKeep,
+		createDirectory:      true,
+		useCombined:          useCombined,
+		logsToWrite:          make([]*common.HoornLog, 0, 300),
+		validatedDirectories: make(map[string]bool, 30),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -35,10 +42,12 @@ func NewFileHoornLogOutput(logDirectory string, maxLogsToKeep int, useCombined b
 
 func NewFileHoornLogOutputWithoutCreateDir(logDirectory string, maxLogsToKeep int, useCombined bool) *FileHoornLogOutput {
 	var fileHoornLogOutput = &FileHoornLogOutput{
-		logDirectory:    filepath.Clean(logDirectory),
-		maxLogsToKeep:   maxLogsToKeep,
-		createDirectory: false,
-		useCombined:     useCombined,
+		logDirectory:         filepath.Clean(logDirectory),
+		maxLogsToKeep:        maxLogsToKeep,
+		createDirectory:      false,
+		useCombined:          useCombined,
+		logsToWrite:          make([]*common.HoornLog, 0, 300),
+		validatedDirectories: make(map[string]bool, 30),
 	}
 
 	fileHoornLogOutput.initialize()
@@ -52,6 +61,10 @@ func (fhl *FileHoornLogOutput) initialize() {
 }
 
 func (fhl *FileHoornLogOutput) validateDirectory(directory string) error {
+	if fhl.validatedDirectories[directory] {
+		return nil
+	}
+
 	_, err := os.Stat(directory)
 	if os.IsNotExist(err) {
 		if fhl.createDirectory {
@@ -59,10 +72,14 @@ func (fhl *FileHoornLogOutput) validateDirectory(directory string) error {
 			if errDir != nil {
 				return errDir
 			}
+
+			fhl.validatedDirectories[directory] = true
 			return nil
 		}
 		return fmt.Errorf("log directory %v does not exist", directory)
 	}
+
+	fhl.validatedDirectories[directory] = true
 	return nil
 }
 
@@ -143,11 +160,11 @@ func (fhl *FileHoornLogOutput) incrementLogs() error {
 	return nil
 }
 
-func (fhl *FileHoornLogOutput) getPathToLogTo(logSeparator string) string {
-	var directory = fhl.logDirectory
+func (fhl *FileHoornLogOutput) getPathToLogTo(logSeparator []byte) string {
+	directory := fhl.logDirectory
 
-	if logSeparator != "" {
-		directory = filepath.Join(fhl.logDirectory, logSeparator)
+	if len(logSeparator) > 0 {
+		directory = filepath.Join(fhl.logDirectory, string(logSeparator))
 	}
 
 	fhl.validateDirectory(directory)
@@ -169,33 +186,84 @@ func getFileChildrenPaths(directory string, extension string) ([]string, error) 
 	return files, nil
 }
 
-func (fhl *FileHoornLogOutput) writeLog(formattedLog string, separator string) {
-	var logDirectory = fhl.getPathToLogTo(separator)
+func (fhl *FileHoornLogOutput) writeLogs(separators [][]byte, messages [][][]byte) {
+	for i, separator := range separators {
+		var logDirectory = fhl.getPathToLogTo(separator)
+		logsAssociatedWithSeparator := messages[i]
 
-	f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
+		f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	defer f.Close()
+		toWrite := bytes.Buffer{}
+		toWrite.Grow(len(logsAssociatedWithSeparator) * 500)
 
-	if _, err := f.WriteString(formattedLog + "\n"); err != nil {
-		log.Fatal(err)
+		for _, msg := range logsAssociatedWithSeparator {
+			toWrite.Write(msg)
+			toWrite.WriteByte('\n')
+		}
+
+		if _, err := f.Write(toWrite.Bytes()); err != nil {
+			log.Fatal(err)
+		}
+
+		f.Close()
 	}
 }
 
-func (fhl *FileHoornLogOutput) Output(hoornLog common.HoornLog) {
-	var formatter = formatting.HoornLogTextFormatter{}
-	formattedLog := formatter.Format(hoornLog)
-	fhl.writeLog(formattedLog, hoornLog.LogSeparator)
-
-	if fhl.useCombined {
-		fhl.HandleCombined(hoornLog)
-	}
+func (fhl *FileHoornLogOutput) Output(hoornLog *common.HoornLog) {
+	fhl.logsToWrite = append(fhl.logsToWrite, hoornLog)
 }
 
-func (fhl *FileHoornLogOutput) HandleCombined(hoornLog common.HoornLog) {
-	var formatter = formatting.HoornLogTextFormatter{}
-	formattedLog := fmt.Sprintf("[%-30s] ", hoornLog.LogSeparator) + formatter.Format(hoornLog)
-	fhl.writeLog(formattedLog, "")
+func alternativeContains(container [][]byte, search []byte) bool {
+	for _, element := range container {
+		if bytes.Equal(element, search) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (fhl *FileHoornLogOutput) Save() {
+	textFormatter := formatting.NewHoornLogTextFormatter()
+	combinedTextFormatter := formatting.NewHoornLogCombinedTextFormatter(*textFormatter)
+
+	separators := make([][]byte, 0, 20)
+	messages := make([][][]byte, 0, 20)
+
+	separators = append(separators, []byte(""))
+	indexOfCombinedSeparator := 0
+
+	for _, hoornLog := range fhl.logsToWrite {
+		formattedLog := textFormatter.Format(hoornLog)
+
+		if !alternativeContains(separators, hoornLog.LogSeparator) {
+			separators = append(separators, hoornLog.LogSeparator)
+		}
+
+		indexOfSeparator := sort.Search(len(separators), func(i int) bool { return bytes.Equal(separators[i], hoornLog.LogSeparator) })
+
+		if indexOfSeparator >= len(messages) {
+			newMessages := make([][][]byte, indexOfSeparator+1)
+			copy(newMessages, messages)
+			messages = newMessages
+		}
+
+		if messages[indexOfSeparator] == nil {
+			messages[indexOfSeparator] = make([][]byte, 0, 10)
+		}
+
+		messages[indexOfSeparator] = append(messages[indexOfSeparator], formattedLog)
+
+		if fhl.useCombined {
+			formattedLog = combinedTextFormatter.Format(hoornLog)
+			messages[indexOfCombinedSeparator] = append(messages[indexOfCombinedSeparator], formattedLog)
+		}
+	}
+
+	fhl.writeLogs(separators, messages)
+
+	fhl.logsToWrite = make([]*common.HoornLog, 0, 300)
 }

@@ -18,9 +18,9 @@ func (c ColorHelper) convertHexToRGB(hexColor string) (r, g, b int64) {
 	return
 }
 
-func (c ColorHelper) ColorizeString(s, textColorHex, backgroundColorHex string) string {
+func (c ColorHelper) ColorizeString(s []byte, textColorHex string, backgroundColorHex string) []byte {
 	if len(s) == 0 {
-		return ""
+		return s
 	}
 
 	rText, gText, bText := c.convertHexToRGB(textColorHex)
@@ -32,5 +32,5 @@ func (c ColorHelper) ColorizeString(s, textColorHex, backgroundColorHex string) 
 		closestAnsiColorCode = closestAnsiColorCodeBackground + closestAnsiColorCode
 	}
 
-	return closestAnsiColorCode + s
+	return append([]byte(closestAnsiColorCode), s...)
 }
