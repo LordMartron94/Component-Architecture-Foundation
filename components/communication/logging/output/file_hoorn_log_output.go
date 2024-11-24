@@ -191,20 +191,24 @@ func (fhl *FileHoornLogOutput) writeLogs(separators [][]byte, messages [][][]byt
 		var logDirectory = fhl.getPathToLogTo(separator)
 		logsAssociatedWithSeparator := messages[i]
 
-		for _, msg := range logsAssociatedWithSeparator {
-			f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			formatted := append(msg, []byte("\n")...)
-
-			if _, err := f.Write(formatted); err != nil {
-				log.Fatal(err)
-			}
-
-			f.Close()
+		f, err := os.OpenFile(logDirectory, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		toWrite := bytes.Buffer{}
+		toWrite.Grow(len(logsAssociatedWithSeparator) * 500)
+
+		for _, msg := range logsAssociatedWithSeparator {
+			toWrite.Write(msg)
+			toWrite.WriteByte('\n')
+		}
+
+		if _, err := f.Write(toWrite.Bytes()); err != nil {
+			log.Fatal(err)
+		}
+
+		f.Close()
 	}
 }
 
