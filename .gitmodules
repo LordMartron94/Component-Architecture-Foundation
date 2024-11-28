@@ -1,4 +1,3 @@
 [submodule "CLI-Bench"]
 	path = components/benchmarking/tool
 	url = https://github.com/LordMartron94/CLI-Bench
-    branch = Refactor
