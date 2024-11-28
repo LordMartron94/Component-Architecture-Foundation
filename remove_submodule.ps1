@@ -11,13 +11,15 @@ if (-not $submodulePath) {
 # 1. Remove the submodule entry from .gitmodules
 $gitmodulesPath = Join-Path -Path (Get-Location) -ChildPath ".gitmodules"
 if (Test-Path $gitmodulesPath) {
-    (Get-Content $gitmodulesPath) | Where-Object { $_ -notmatch "\[submodule ""$submodulePath""\]" } | Set-Content $gitmodulesPath
+    $submoduleLines = Get-Content $gitmodulesPath
+    $submoduleName = ($submoduleLines | Where-Object { $_ -match "path = $submodulePath" } | Select-String -Pattern "\[submodule ""(.*)""\]" -AllMatches).Matches.Groups[1].Value
+    $submoduleLines | Where-Object { $_ -notmatch "\[submodule ""$submoduleName""\]" } | Set-Content $gitmodulesPath
 }
 
-# 2. Remove the submodule entry from .git/config
+# 2. Remove the submodule entry from .git/config (update with $submoduleName)
 $gitConfigPath = Join-Path -Path (Get-Location) -ChildPath ".git/config"
 if (Test-Path $gitConfigPath) {
-    (Get-Content $gitConfigPath) | Where-Object { $_ -notmatch "\[submodule ""$submodulePath""\]" } | Set-Content $gitConfigPath
+    (Get-Content $gitConfigPath) | Where-Object { $_ -notmatch "\[submodule ""$submoduleName""\]" } | Set-Content $gitConfigPath
 }
 
 # 3. Remove the submodule from the index
