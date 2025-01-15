@@ -107,7 +107,12 @@ func (d *DefaultConnectionHandler) CloseConnections() {
 }
 
 func (d *DefaultConnectionHandler) StopConnection(peer *peer.Peer) error {
-	close(d.listeners[peer])
+	channelToClose := d.listeners[peer]
+
+	if channelToClose != nil {
+		close(channelToClose)
+	}
+
 	delete(d.listeners, peer)
 	return nil
 }
